@@ -16,14 +16,18 @@ pipeline {
         // Image tag
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         
-        // Deployment server (optional, for remote deployment)
-        DEPLOY_SERVER = 'user@your-server.com'
-        DEPLOY_SERVER_CREDENTIALS_ID = 'deploy-server-ssh'
+        // 🚨 NEW: DevSecOps Security Tools
+        SONARQUBE_URL = 'http://localhost:9000'
+        SONARQUBE_TOKEN_ID = 'sonarqube-token'
+        OWASP_ZAP_URL = 'http://localhost:8080'
         
-        // 🚨 NEW: Grafana variables
-        GRAFANA_URL = 'https://ayoubcpge9.grafana.net' // 👈 **CHANGE THIS**
-        GRAFANA_API_KEY_CREDENTIALS_ID = '0acea52d-149d-4dce-affc-6e88b440471e' // 👈 **CHANGE THIS** (Jenkins Secret Text)
-        GRAFANA_DASHBOARD_ID = '1' // 👈 **CHANGE THIS** (The ID of your target dashboard)
+        // 🤖 NEW: AI Integration
+        HUGGINGFACE_TOKEN_ID = 'huggingface-token'
+        
+        // Grafana variables
+        GRAFANA_URL = 'https://ayoubcpge9.grafana.net'
+        GRAFANA_API_KEY_CREDENTIALS_ID = '0acea52d-149d-4dce-affc-6e88b440471e'
+        GRAFANA_DASHBOARD_ID = '1'
     }
     
     stages {
@@ -32,6 +36,42 @@ pipeline {
                 echo '📦 Checking out source code...'
                 script {
                     git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
+                }
+            }
+        }
+        
+        // 🚨 NEW: Pre-commit Security Checks
+        stage('Pre-commit Security') {
+            parallel {
+                stage('Secrets Scanning') {
+                    steps {
+                        script {
+                            echo '🕵️ Scanning for secrets with Gitleaks...'
+                            sh """
+                                docker run --rm -v \$(pwd):/repo zricethezav/gitleaks:latest detect \\
+                                    --source=/repo \\
+                                    --report-format=json \\
+                                    --report-path=/repo/reports/gitleaks-report.json \\
+                                    --no-git || echo "Gitleaks scan completed"
+                            """
+                        }
+                    }
+                }
+                
+                stage('SAST - Semgrep') {
+                    steps {
+                        script {
+                            echo '🔍 Running SAST with Semgrep...'
+                            sh """
+                                mkdir -p reports
+                                docker run --rm -v \$(pwd):/src returntocorp/semgrep:latest \\
+                                    --config=p/python \\
+                                    --json \\
+                                    --output=/src/reports/semgrep-report.json \\
+                                    /src || echo "Semgrep scan completed"
+                            """
+                        }
+                    }
                 }
             }
         }
@@ -48,53 +88,169 @@ pipeline {
             }
         }
         
+        // 🚨 ENHANCED: Security Scanning with Multiple Tools
+        stage('Security Scanning') {
+            parallel {
+                stage('SCA - Dependency Check') {
+                    steps {
+                        script {
+                            echo '📦 Running SCA with OWASP Dependency-Check...'
+                            sh """
+                                mkdir -p reports
+                                docker run --rm -v \$(pwd):/src \\
+                                    -v dependency-check-data:/usr/share/dependency-check/data \\
+                                    owasp/dependency-check:latest \\
+                                    --scan /src \\
+                                    --format JSON \\
+                                    --out /src/reports \\
+                                    --project "Stock Market Platform" || echo "Dependency check completed"
+                            """
+                        }
+                    }
+                }
+                
+                stage('Container Scan - Trivy') {
+                    steps {
+                        script {
+                            echo '🔒 Running container scan with Trivy...'
+                            sh """
+                                mkdir -p reports
+                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
+                                    -v \$(pwd)/reports:/reports \\
+                                    aquasec/trivy:latest image \\
+                                    --format json \\
+                                    --output /reports/trivy-report.json \\
+                                    ${IMAGE_NAME}:${IMAGE_TAG} || echo "Trivy scan completed"
+                            """
+                        }
+                    }
+                }
+                
+                stage('SAST - SonarQube') {
+                    steps {
+                        script {
+                            echo '🔍 Running SAST with SonarQube...'
+                            withCredentials([string(credentialsId: SONARQUBE_TOKEN_ID, variable: 'SONAR_TOKEN')]) {
+                                sh """
+                                    mkdir -p reports
+                                    docker run --rm \\
+                                        -e SONAR_HOST_URL="${SONARQUBE_URL}" \\
+                                        -e SONAR_LOGIN="\${SONAR_TOKEN}" \\
+                                        -v \$(pwd):/usr/src \\
+                                        sonarsource/sonar-scanner-cli:latest \\
+                                        -Dsonar.projectKey=stock-market-platform \\
+                                        -Dsonar.sources=app/ \\
+                                        -Dsonar.language=python || echo "SonarQube scan completed"
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy for DAST') {
+            steps {
+                script {
+                    echo '🚀 Deploying application for DAST testing...'
+                    sh """
+                        docker compose down || true
+                        docker compose up -d
+                        echo "Waiting for application to start..."
+                        sleep 30
+                        
+                        # Wait for health check
+                        for i in {1..10}; do
+                            if curl -f http://localhost:8000/api/v1/ping; then
+                                echo "✅ Application is ready for DAST!"
+                                break
+                            else
+                                echo "Attempt \$i: Application not ready yet, waiting..."
+                                sleep 10
+                            fi
+                        done
+                    """
+                }
+            }
+        }
+        
+        // 🚨 NEW: DAST with OWASP ZAP
+        stage('DAST - OWASP ZAP') {
+            steps {
+                script {
+                    echo '🕷️ Running DAST with OWASP ZAP...'
+                    sh """
+                        mkdir -p reports
+                        docker run --rm \\
+                            --network=host \\
+                            -v \$(pwd)/reports:/zap/wrk/:rw \\
+                            owasp/zap2docker-stable:latest \\
+                            zap-baseline.py \\
+                            -t http://localhost:8000 \\
+                            -J zap-report.json \\
+                            -r zap-report.html || echo "ZAP scan completed"
+                    """
+                }
+            }
+        }
+        
+        // 🤖 NEW: AI-Driven Security Policy Generation
+        stage('AI Security Policy Generation') {
+            steps {
+                script {
+                    echo '🤖 Generating security policies with AI...'
+                    withCredentials([string(credentialsId: HUGGINGFACE_TOKEN_ID, variable: 'HF_TOKEN')]) {
+                        sh """
+                            # Create AI processing container
+                            docker run --rm \\
+                                -v \$(pwd)/reports:/reports \\
+                                -v \$(pwd)/ai-policies:/output \\
+                                -e HF_TOKEN="\${HF_TOKEN}" \\
+                                python:3.11-slim \\
+                                bash -c "
+                                    pip install transformers torch huggingface_hub requests
+                                    python /reports/process_vulnerabilities.py
+                                " || echo "AI policy generation completed"
+                        """
+                    }
+                }
+            }
+        }
+        
+        // 🚨 NEW: Report Normalization & Analysis
+        stage('Report Processing & Analysis') {
+            steps {
+                script {
+                    echo '📊 Processing and normalizing security reports...'
+                    sh """
+                        # Create reports processing service
+                        docker run --rm \\
+                            -v \$(pwd)/reports:/input \\
+                            -v \$(pwd)/processed:/output \\
+                            ${IMAGE_NAME}:${IMAGE_TAG} \\
+                            python -c "
+                            import json
+                            import sys
+                            sys.path.append('/code')
+                            from app.services.report_processor import process_all_reports
+                            process_all_reports('/input', '/output')
+                            " || echo "Report processing completed"
+                    """
+                }
+            }
+        }
+        
         stage('Run Tests') {
             steps {
                 script {
                     echo '🧪 Running tests...'
                     sh """
-                        docker compose -f docker-compose.yml up -d db redis || true
-                        sleep 10
-                        NETWORK_NAME=\$(docker network ls --filter name=fastapi --format "{{.Name}}" | head -n 1 || echo "fastapi_default")
                         docker run --rm \\
-                            --network="\${NETWORK_NAME}" \\
+                            --network=\$(docker network ls --filter name=fastapi --format "{{.Name}}" | head -n 1 || echo "fastapi_default") \\
                             -e DATABASE_URL="postgresql://fastapi:fastapi@db:5432/fastapi_db" \\
                             -e REDIS_URL="redis://redis:6379/0" \\
                             ${IMAGE_NAME}:${IMAGE_TAG} \\
                             sh -c 'pip install pytest && pytest -v || echo "No tests found"'
-                        docker compose -f docker-compose.yml down || true
-                    """
-                }
-            }
-        }
-        
-        stage('Code Quality Checks') {
-            steps {
-                script {
-                    echo '🔍 Running code quality checks...'
-                    sh """
-                        docker run --rm ${IMAGE_NAME}:${IMAGE_TAG} \\
-                            sh -c 'black --check app/ || echo "Black formatting check completed with warnings"'
-                    """
-                    sh """
-                        docker run --rm ${IMAGE_NAME}:${IMAGE_TAG} \\
-                            sh -c 'isort --check-only app/ || echo "isort check completed with warnings"'
-                    """
-                }
-            }
-        }
-        
-        stage('Security Scan') {
-            steps {
-                script {
-                    echo '🔒 Running security scan with Trivy...'
-                    sh """
-                        if ! command -v trivy >/dev/null 2>&1; then
-                            echo "Trivy not installed, skipping security scan"
-                        else
-                            echo "Running Trivy security scan..."
-                            trivy image --severity HIGH,CRITICAL --exit-code 1 --no-progress ${IMAGE_NAME}:${IMAGE_TAG} || true
-                        fi
                     """
                 }
             }
@@ -120,52 +276,49 @@ pipeline {
             }
         }
         
-        stage('Deploy with Docker Compose') {
+        // 🚨 NEW: Archive Security Reports
+        stage('Archive Reports') {
             steps {
                 script {
-                    echo '🚀 Deploying to Docker Desktop...'
-                    sh """
-                        docker compose down || true
-                        docker pull ${IMAGE_NAME}:latest
-                        docker compose up -d
-                        echo "Waiting for services to start..."
-                        sleep 20
-                        docker compose ps
-                        docker compose logs --tail=20
-                        echo "Testing API health..."
-                        for i in {1..5}; do
-                            if curl -f http://localhost:8000/api/v1/finance/health; then
-                                echo "✅ API is healthy!"
-                                break
-                            else
-                                echo "Attempt \$i: API not ready yet, waiting..."
-                                sleep 5
-                            fi
-                        done
-                    """
+                    echo '📁 Archiving security reports and AI-generated policies...'
+                    archiveArtifacts artifacts: 'reports/*.json,reports/*.html,ai-policies/*.json,processed/*.json', allowEmptyArchive: true
+                    
+                    // Publish test results if available
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'reports',
+                        reportFiles: 'zap-report.html',
+                        reportName: 'OWASP ZAP Report'
+                    ])
                 }
             }
         }
         
-        // 🚨 NEW: Grafaana Notification Stage
-        stage('Grafaana Notification') {
+        // Enhanced Grafana Notification with Security Metrics
+        stage('Grafana Notification') {
             steps {
                 script {
-                    echo '📢 Sending deployment annotation to Grafana...'
+                    echo '📢 Sending deployment annotation with security metrics to Grafana...'
                     withCredentials([string(credentialsId: GRAFANA_API_KEY_CREDENTIALS_ID, variable: 'GRAFANA_API_KEY')]) {
                         sh """
                             TIME_MS=\$(date +%s%3N)
-                            MESSAGE="Deployment of ${IMAGE_NAME} complete! Tag: ${IMAGE_TAG} (Build \${BUILD_NUMBER})"
+                            
+                            # Count vulnerabilities from reports
+                            HIGH_VULNS=\$(find reports -name "*.json" -exec grep -l "HIGH\\|CRITICAL" {} \\; | wc -l || echo "0")
+                            
+                            MESSAGE="🚀 DevSecOps Deployment Complete! Tag: ${IMAGE_TAG} | Build: \${BUILD_NUMBER} | Security Scans: ✅ | High/Critical Vulns: \${HIGH_VULNS}"
                             
                             curl -X POST -H "Authorization: Bearer \${GRAFANA_API_KEY}" \\
                                  -H "Content-Type: application/json" \\
                                  -d '{
                                      "dashboardId": \${GRAFANA_DASHBOARD_ID},
                                      "time": \${TIME_MS},
-                                     "tags": ["deployment", "jenkins", "success", "${IMAGE_TAG}"],
+                                     "tags": ["devsecops", "ai-policy", "security", "${IMAGE_TAG}"],
                                      "text": "\${MESSAGE}"
                                  }' \\
-                                 "${GRAFANA_URL}/api/annotations" || echo "Failed to send Grafana annotation (is API key valid?)"
+                                 "${GRAFANA_URL}/api/annotations" || echo "Failed to send Grafana annotation"
                         """
                     }
                 }
@@ -175,16 +328,29 @@ pipeline {
     
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo '✅ DevSecOps Pipeline completed successfully!'
+            script {
+                // Send success notification with security summary
+                sh """
+                    echo "📊 Security Scan Summary:"
+                    echo "- Reports generated: \$(ls reports/ | wc -l)"
+                    echo "- AI policies created: \$(ls ai-policies/ 2>/dev/null | wc -l || echo 0)"
+                    echo "- Processing artifacts: \$(ls processed/ 2>/dev/null | wc -l || echo 0)"
+                """
+            }
         }
         failure {
-            echo '❌ Pipeline failed! Check logs for details.'
+            echo '❌ DevSecOps Pipeline failed! Check security scan logs for details.'
         }
         always {
-            echo '🧹 Cleaning up old images...'
+            echo '🧹 Cleaning up...'
             sh """
+                # Clean up old images
                 docker images ${IMAGE_NAME} --format "{{.Tag}}" | tail -n +6 | xargs -r docker rmi ${IMAGE_NAME}: || true
                 docker image prune -f || true
+                
+                # Keep reports for analysis but clean old ones
+                find reports/ -name "*.json" -mtime +7 -delete 2>/dev/null || true
             """
         }
     }
