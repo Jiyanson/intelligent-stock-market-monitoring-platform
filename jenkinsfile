@@ -8,10 +8,7 @@ pipeline {
         IMAGE_NAME = "${DOCKER_USERNAME}/stock-market-platform"
         DOCKER_CREDENTIALS_ID = '2709ba15-3bf5-42b4-a41e-e2ae435f4951'
         
-        // Git repository
-        GIT_REPO_URL = 'https://github.com/Jiyanson/intelligent-stock-market-monitoring-platform-backend.git'
-        GIT_CREDENTIALS_ID = 'github-credentials'
-        GIT_BRANCH = 'main'
+        // Git repository managed by Jenkins SCM
         
         // Image tag
         IMAGE_TAG = "${env.BUILD_NUMBER}"
