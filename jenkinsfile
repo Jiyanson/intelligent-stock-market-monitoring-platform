@@ -160,7 +160,7 @@ pipeline {
                     echo '🚀 Deploying application for DAST testing...'
                     sh """
                         docker-compose down || true
-                        docker-compose up -d
+                        docker-compose up -d --build
                         echo "Waiting for application to start..."
                         sleep 30
                         
