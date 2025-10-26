@@ -15,17 +15,16 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python packages for AI processing
+# Install Python packages for AI processing (lighter versions for faster build)
 RUN pip install --no-cache-dir \
-    transformers==4.35.0 \
-    torch==2.1.0 \
-    huggingface_hub==0.17.0 \
-    requests==2.31.0 \
-    pandas==2.1.3 \
-    numpy==1.24.3 \
-    scikit-learn==1.3.2 \
-    nltk==3.8.1 \
-    python-dotenv==1.0.0
+    torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir \
+    transformers \
+    huggingface_hub \
+    requests \
+    pandas \
+    numpy \
+    python-dotenv
 
 # Create directories for processing
 RUN mkdir -p /reports /output /app/scripts

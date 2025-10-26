@@ -322,32 +322,11 @@ pipeline {
                     archiveArtifacts artifacts: 'reports/*.json,reports/*.html,ai-policies/*.json,processed/*.json', allowEmptyArchive: true
                     
                     // Publish test results if available
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'reports',
-                        reportFiles: 'zap-report.html',
-                        reportName: 'OWASP ZAP Report'
-                    ])
-
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'reports',
-                        reportFiles: 'trivy-report.html',
-                        reportName: 'Trivy Report'
-                    ])
-
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'reports',
-                        reportFiles: 'dependency-check-report.html',
-                        reportName: 'OWASP Dependency-Check Report'
-                    ])
+                    // HTML reports archived as artifacts (publishHTML plugin not available)
+                    echo "📄 HTML reports archived in artifacts:"
+                    echo "- OWASP ZAP Report: reports/zap-report.html"
+                    echo "- Trivy Report: reports/trivy-report.html" 
+                    echo "- Dependency-Check Report: reports/dependency-check-report.html"
                 }
             }
         }
