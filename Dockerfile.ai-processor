@@ -1,0 +1,44 @@
+# Dockerfile.ai-processor
+# Custom Docker image for AI security policy generation with pre-installed packages
+
+FROM python:3.11-slim
+
+LABEL maintainer="DevSecOps Pipeline"
+LABEL description="AI Security Policy Generator with pre-installed ML packages"
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for AI processing
+RUN pip install --no-cache-dir \
+    transformers==4.35.0 \
+    torch==2.1.0 \
+    huggingface_hub==0.17.0 \
+    requests==2.31.0 \
+    pandas==2.1.3 \
+    numpy==1.24.3 \
+    scikit-learn==1.3.2 \
+    nltk==3.8.1 \
+    python-dotenv==1.0.0
+
+# Create directories for processing
+RUN mkdir -p /reports /output /app/scripts
+
+# Copy the vulnerability processing script
+COPY reports/process_vulnerabilities.py /app/scripts/
+
+# Set permissions
+RUN chmod +x /app/scripts/process_vulnerabilities.py
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV HF_HOME=/tmp/huggingface
+
+# Default command
+CMD ["python", "/app/scripts/process_vulnerabilities.py"]

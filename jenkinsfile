@@ -82,6 +82,18 @@ pipeline {
             }
         }
         
+        stage('Build AI Processor Image') {
+            steps {
+                script {
+                    echo "🤖 Building AI processor image (cached for faster AI stages)..."
+                    sh """
+                        # Build AI processor image with pre-installed ML packages
+                        docker build -f Dockerfile.ai-processor -t ai-security-processor:latest . || echo "AI processor build completed"
+                    """
+                }
+            }
+        }
+        
         // 🚨 ENHANCED: Security Scanning with Multiple Tools
         stage('Security Scanning') {
             parallel {
@@ -218,18 +230,25 @@ pipeline {
             steps {
                 script {
                     echo '🤖 Generating security policies with AI...'
+                    // Build AI processor image if not exists
+                    sh """
+                        # Build AI processor image with pre-installed packages (only if needed)
+                        if ! docker images | grep -q "ai-security-processor"; then
+                            echo "Building AI processor image with pre-installed packages..."
+                            docker build -f Dockerfile.ai-processor -t ai-security-processor:latest .
+                        else
+                            echo "AI processor image already exists, skipping build..."
+                        fi
+                    """
+                    
                     withCredentials([string(credentialsId: HUGGINGFACE_TOKEN_ID, variable: 'HF_TOKEN')]) {
                         sh """
-                            # Create AI processing container
+                            # Use pre-built AI processor image (much faster)
                             docker run --rm \\
                                 -v \$(pwd)/reports:/reports \\
                                 -v \$(pwd)/ai-policies:/output \\
                                 -e HF_TOKEN="\${HF_TOKEN}" \\
-                                python:3.11-slim \\
-                                bash -c "
-                                    pip install transformers torch huggingface_hub requests
-                                    python /reports/process_vulnerabilities.py
-                                " || echo "AI policy generation completed"
+                                ai-security-processor:latest || echo "AI policy generation completed"
                         """
                     }
                 }
