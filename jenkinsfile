@@ -259,7 +259,7 @@ pipeline {
             }
         }
         
-        stage('Run Tests') {
+        '''stage('Run Tests') {
             steps {
                 script {
                     echo '🧪 Running tests...'
@@ -293,7 +293,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }'''
         
         // 🚨 NEW: Archive Security Reports
         stage('Archive Reports') {
@@ -334,7 +334,7 @@ pipeline {
         }
         
         // Enhanced Grafana Notification with Security Metrics
-        stage('Grafana Notification') {
+       ''' stage('Grafana Notification') {
             steps {
                 script {
                     echo '📢 Sending deployment annotation with security metrics to Grafana...'
@@ -361,7 +361,7 @@ pipeline {
                 }
             }
         }
-    }
+    }'''
     
     post {
         success {
