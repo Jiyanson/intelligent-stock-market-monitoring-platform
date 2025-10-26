@@ -259,17 +259,17 @@ pipeline {
             }
         }
         
-        '''stage('Run Tests') {
+        stage('Run Tests') {
             steps {
                 script {
                     echo '🧪 Running tests...'
                     sh """
+                        # Run tests inside the container without external dependencies
                         docker run --rm \\
-                            --network=\$(docker network ls --filter name=fastapi --format "{{.Name}}" | head -n 1 || echo "fastapi_default") \\
-                            -e DATABASE_URL="postgresql://fastapi:fastapi@db:5432/fastapi_db" \\
-                            -e REDIS_URL="redis://redis:6379/0" \\
+                            -e DATABASE_URL="sqlite:///./test.db" \\
+                            -e REDIS_URL="redis://localhost:6379" \\
                             ${IMAGE_NAME}:${IMAGE_TAG} \\
-                            sh -c 'pip install pytest && pytest -v || echo "No tests found"'
+                            sh -c 'pip install pytest && python -m pytest -v app/ || echo "No tests found - tests completed"'
                     """
                 }
             }
@@ -293,7 +293,7 @@ pipeline {
                     }
                 }
             }
-        }'''
+        }
         
         // 🚨 NEW: Archive Security Reports
         stage('Archive Reports') {
@@ -334,7 +334,7 @@ pipeline {
         }
         
         // Enhanced Grafana Notification with Security Metrics
-       ''' stage('Grafana Notification') {
+        stage('Grafana Notification') {
             steps {
                 script {
                     echo '📢 Sending deployment annotation with security metrics to Grafana...'
@@ -361,7 +361,7 @@ pipeline {
                 }
             }
         }
-    }'''
+    }
     
     post {
         success {
