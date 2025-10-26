@@ -97,12 +97,12 @@ pipeline {
                             echo '📦 Running SCA with OWASP Dependency-Check...'
                             sh """
                                 mkdir -p reports
-                                docker run --rm -v \$(pwd):/src \\
-                                    -v dependency-check-data:/usr/share/dependency-check/data \\
-                                    owasp/dependency-check:latest \\
-                                    --scan /src \\
-                                    --format JSON \\
-                                    --out /src/reports \\
+                                docker run --rm -v \$(pwd):/src \
+                                    -v dependency-check-data:/usr/share/dependency-check/data \
+                                    owasp/dependency-check:latest \
+                                    --scan /src \
+                                    --format "JSON,HTML" \
+                                    --out /src/reports \
                                     --project "Stock Market Platform" || echo "Dependency check completed"
                             """
                         }
@@ -114,13 +114,24 @@ pipeline {
                         script {
                             echo '🔒 Running container scan with Trivy...'
                             sh """
+                                set -e
                                 mkdir -p reports
-                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
-                                    -v \$(pwd)/reports:/reports \\
-                                    aquasec/trivy:latest image \\
-                                    --format json \\
-                                    --output /reports/trivy-report.json \\
-                                    ${IMAGE_NAME}:${IMAGE_TAG} || echo "Trivy scan completed"
+                                # JSON report
+                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                                    -v \$(pwd)/reports:/reports \
+                                    aquasec/trivy:latest image \
+                                    --format json \
+                                    --output /reports/trivy-report.json \
+                                    ${IMAGE_NAME}:${IMAGE_TAG} || echo "Trivy JSON scan completed"
+
+                                # Fetch HTML template and render HTML report
+                                curl -fsSL -o reports/trivy-html.tmpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl || true
+                                docker run --rm -v \$(pwd)/reports:/reports \
+                                    aquasec/trivy:latest image \
+                                    --format template \
+                                    --template @/reports/trivy-html.tmpl \
+                                    --output /reports/trivy-report.html \
+                                    ${IMAGE_NAME}:${IMAGE_TAG} || echo "Trivy HTML report generation completed"
                             """
                         }
                     }
@@ -285,12 +296,30 @@ pipeline {
                     
                     // Publish test results if available
                     publishHTML([
-                        allowMissing: false,
+                        allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: 'reports',
                         reportFiles: 'zap-report.html',
                         reportName: 'OWASP ZAP Report'
+                    ])
+
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'reports',
+                        reportFiles: 'trivy-report.html',
+                        reportName: 'Trivy Report'
+                    ])
+
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'reports',
+                        reportFiles: 'dependency-check-report.html',
+                        reportName: 'OWASP Dependency-Check Report'
                     ])
                 }
             }
