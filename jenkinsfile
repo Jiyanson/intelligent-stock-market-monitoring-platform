@@ -387,19 +387,12 @@ process_all_reports("/input", "/output")
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    echo '🚀 Pushing image to Docker Hub...'
-                    withCredentials([usernamePassword(
-                        credentialsId: DOCKER_CREDENTIALS_ID,
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        sh """
-                            echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
-                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${IMAGE_NAME}:latest
-                            docker logout
-                        """
-                    }
+                    echo '🚀 Skipping Docker Hub push (for demo only)...'
+                    sh """
+                        echo "✅ Docker image ${IMAGE_NAME}:${IMAGE_TAG} built successfully"
+                        echo "⏩ Skipping Docker Hub push for demo purposes"
+                        echo "📝 In production, the image would be pushed to a registry"
+                    """
                 }
             }
         }
