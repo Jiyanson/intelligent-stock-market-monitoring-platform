@@ -33,10 +33,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📦 Checking out source code...'
-                script {
-                    git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
-                }
+                echo '📦 Source code already checked out by Jenkins SCM'
             }
         }
         
