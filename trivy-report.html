@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trivy Security Report - Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .critical { background-color: #ff0000; color: white; }
+        .high { background-color: #ff8800; color: white; }
+        .medium { background-color: #ffaa00; }
+        .low { background-color: #00aa00; color: white; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>🔒 Trivy Container Security Report</h1>
+    <h2>Scan Results for: stock-market-platform</h2>
+    <table>
+        <tr><th>Package</th><th>Vulnerability ID</th><th>Severity</th><th>Installed Version</th><th>Fixed Version</th></tr>
+        <tr class=" high\><td>python</td><td>CVE-2023-DEMO</td><td>HIGH</td><td>3.11.0</td><td>3.11.8</td></tr>

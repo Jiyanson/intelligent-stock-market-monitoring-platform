@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>🔒 Trivy Real Security Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .critical { background-color: #ff0000; color: white; }
+        .high { background-color: #ff8800; color: white; }
+        .medium { background-color: #ffaa00; }
+        .low { background-color: #00aa00; color: white; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .summary { background-color: #f0f8ff; padding: 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔒 Trivy Real Security Scan Report</h1>
+    <div class="summary">
+        <h2>📊 Summary</h2>
+        <p><strong>Image:</strong> saadait02/stock-market-platform:latest</p>
+        <p><strong>Total Vulnerabilities:</strong> 631</p>
+        <p><strong>HIGH/CRITICAL:</strong> 55 | <strong>MEDIUM:</strong> 150 | <strong>LOW:</strong> 424</p>
+        <p><strong>Scan Date:</strong> 10/27/2025 00:19:40</p>
+    </div>
+    
+    <h2>🚨 High & Critical Vulnerabilities</h2>
+    <table>
+        <tr><th>CVE ID</th><th>Severity</th><th>Package</th><th>Installed</th><th>Fixed</th></tr>
+        <tr class="high"><td>CVE-2013-7445</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2019-19449</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2019-19814</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2021-3847</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2021-3864</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2024-21803</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2024-57995</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2024-58015</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2025-22104</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+        <tr class="high"><td>CVE-2025-22121</td><td>HIGH</td><td>linux-libc-dev</td><td>6.12.48-1</td><td></td></tr>
+    </table>
+    
+    <h2>📋 Top 10 Other Vulnerabilities</h2>
+    <table>
+        <tr><th>CVE ID</th><th>Severity</th><th>Package</th><th>Installed</th><th>Fixed</th></tr>
+        <tr class="low"><td>CVE-2011-3374</td><td>LOW</td><td>apt</td><td>3.0.3</td><td></td></tr>
+        <tr class="low"><td>TEMP-0841856-B18BAF</td><td>LOW</td><td>bash</td><td>5.2.37-2+b5</td><td></td></tr>
+        <tr class="low"><td>CVE-2018-7738</td><td>LOW</td><td>bash-completion</td><td>1:2.16.0-7</td><td></td></tr>
+        <tr class="low"><td>CVE-2017-13716</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2018-20673</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2018-20712</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2018-9996</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2021-32256</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2025-11081</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+        <tr class="low"><td>CVE-2025-11082</td><td>LOW</td><td>binutils</td><td>2.44-3</td><td></td></tr>
+    </table>
+    
+    <div class="summary">
+        <h2>🎯 Recommendations</h2>
+        <ul>
+            <li>Update base image to latest Debian version</li>
+            <li>Remove unnecessary packages to reduce attack surface</li>
+            <li>Use distroless or alpine base images for production</li>
+            <li>Implement regular vulnerability scanning in CI/CD</li>
+        </ul>
+    </div>
+</body>
+</html>
