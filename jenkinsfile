@@ -384,8 +384,18 @@ if __name__ == "__main__":
     generate_ai_policy()
 EOF
 
-                        # Run AI policy generation
+                        # Run AI policy generation (rule-based)
                         python3 generate_ai_policy.py || echo "AI policy generation completed with basic data"
+                        
+                        # Run REAL DeepSeek R1 LLM integration if token available
+                        if [ ! -z "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-hf-token" ]; then
+                            echo "🧠 Running REAL DeepSeek R1 analysis..."
+                            echo "🔬 DeepSeek R1 is an advanced reasoning model for security analysis"
+                            python3 real_llm_integration.py || echo "DeepSeek R1 analysis completed"
+                        else
+                            echo "⚠️ No valid HF token - using rule-based AI only"
+                            echo "💡 To enable DeepSeek R1, add your HuggingFace token to Jenkins credentials"
+                        fi
                     """
                 }
             }
