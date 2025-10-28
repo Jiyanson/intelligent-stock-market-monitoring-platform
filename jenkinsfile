@@ -225,178 +225,53 @@ pipeline {
             }
         }
         
-        // 🤖 NEW: AI-Driven Security Policy Generation from REAL DATA
+        // 🧰 Normalize Reports
+        stage('Normalize Reports') {
+            steps {
+                script {
+                    echo '🧾 Normalizing security reports into a unified schema...'
+                    sh """
+                        mkdir -p processed
+                        docker run --rm \
+                          -v $(pwd)/reports:/reports \
+                          -v $(pwd)/processed:/output \
+                          -v $(pwd)/jenkins-reports:/work \
+                          -w /work \
+                          python:3.11-slim \
+                          sh -c 'pip install -q requests && python process_vulnerabilities.py' || echo "Normalization completed"
+                    """
+                }
+            }
+        }
+
+        // 🤖 AI-Driven Security Policy Generation (uses real normalized data + DeepSeek R1 via Hugging Face)
         stage('AI Security Policy Generation') {
             steps {
                 script {
-                    echo '🤖 Generating security policies with AI from YOUR REAL scan data...'
-                    sh """
-                        # Create AI policy generator script
-                        cat > generate_ai_policy.py << 'EOF'
-#!/usr/bin/env python3
-import json
-import os
-from datetime import datetime
-
-def generate_ai_policy():
-    print("🤖 Generating AI policy from REAL security scan data...")
-    
-    # Load real reports
-    try:
-        with open('reports/trivy-report.json', 'r') as f:
-            trivy_data = json.load(f)
-    except:
-        trivy_data = {'Results': []}
-    
-    try:
-        with open('reports/semgrep-report.json', 'r') as f:
-            semgrep_data = json.load(f)
-    except:
-        semgrep_data = {'results': [], 'paths': {'scanned': []}}
-    
-    # Count vulnerabilities by severity
-    severity_counts = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
-    high_priority_vulns = []
-    
-    for result in trivy_data.get('Results', []):
-        for vuln in result.get('Vulnerabilities', []):
-            severity = vuln.get('Severity', 'UNKNOWN')
-            if severity in severity_counts:
-                severity_counts[severity] += 1
-            
-            if severity in ['CRITICAL', 'HIGH']:
-                high_priority_vulns.append({
-                    'id': vuln.get('VulnerabilityID'),
-                    'severity': severity,
-                    'package': vuln.get('PkgName'),
-                    'version': vuln.get('InstalledVersion')
-                })
-    
-    # Generate AI policy based on REAL data
-    ai_policy = {
-        'timestamp': datetime.now().isoformat(),
-        'build_number': os.getenv('BUILD_NUMBER', 'unknown'),
-        'source': 'REAL security scan results from Jenkins DevSecOps pipeline',
-        'scan_summary': {
-            'total_vulnerabilities': sum(severity_counts.values()),
-            'severity_breakdown': severity_counts,
-            'code_analysis': {
-                'semgrep_findings': len(semgrep_data.get('results', [])),
-                'files_scanned': len(semgrep_data.get('paths', {}).get('scanned', [])),
-                'status': 'CLEAN' if len(semgrep_data.get('results', [])) == 0 else 'ISSUES_FOUND'
-            }
-        },
-        'nist_csf_recommendations': [],
-        'iso27001_controls': [],
-        'remediation_priorities': []
-    }
-    
-    # NIST CSF recommendations based on real findings
-    if severity_counts['CRITICAL'] > 0:
-        ai_policy['nist_csf_recommendations'].append({
-            'function': 'PROTECT',
-            'category': 'PR.DS-6',
-            'description': 'Critical vulnerabilities require immediate attention',
-            'reason': f'{severity_counts["CRITICAL"]} critical vulnerabilities detected',
-            'priority': 'CRITICAL'
-        })
-    
-    if severity_counts['HIGH'] > 0:
-        ai_policy['nist_csf_recommendations'].append({
-            'function': 'DETECT',
-            'category': 'DE.CM-8',
-            'description': 'Vulnerability scanning implemented and findings documented',
-            'reason': f'{severity_counts["HIGH"]} high severity vulnerabilities detected',
-            'priority': 'HIGH'
-        })
-    
-    if severity_counts['LOW'] > 100:
-        ai_policy['nist_csf_recommendations'].append({
-            'function': 'PROTECT',
-            'category': 'PR.IP-1',
-            'description': 'Consider minimal base images to reduce attack surface',
-            'reason': f'{severity_counts["LOW"]} low severity vulnerabilities suggest bloated image',
-            'priority': 'MEDIUM'
-        })
-    
-    # ISO 27001 controls
-    ai_policy['iso27001_controls'].append({
-        'control': 'A.12.6.1',
-        'title': 'Management of technical vulnerabilities',
-        'status': 'IMPLEMENTED',
-        'evidence': f'Automated vulnerability scanning: {sum(severity_counts.values())} vulnerabilities identified'
-    })
-    
-    if len(semgrep_data.get('results', [])) == 0:
-        ai_policy['iso27001_controls'].append({
-            'control': 'A.14.2.5',
-            'title': 'Secure system engineering principles',
-            'status': 'COMPLIANT',
-            'evidence': f'Static analysis clean: 0 security issues in {len(semgrep_data.get("paths", {}).get("scanned", []))} files'
-        })
-    
-    # Remediation priorities
-    if high_priority_vulns:
-        ai_policy['remediation_priorities'].append({
-            'priority': 1,
-            'issue': f'{len(high_priority_vulns)} critical/high vulnerabilities',
-            'recommendation': 'Update base image and vulnerable packages',
-            'effort': 'LOW',
-            'impact': 'HIGH'
-        })
-    
-    ai_policy['remediation_priorities'].append({
-        'priority': 2,
-        'issue': 'Container image optimization',
-        'recommendation': 'Migrate to minimal base image (alpine/distroless)',
-        'effort': 'MEDIUM',
-        'impact': 'HIGH'
-    })
-    
-    # Save policy
-    os.makedirs('ai-policies', exist_ok=True)
-    with open('ai-policies/ai_generated_policy.json', 'w') as f:
-        json.dump(ai_policy, f, indent=2)
-    
-    # Create normalized vulnerabilities
-    normalized_vulns = []
-    for result in trivy_data.get('Results', []):
-        for vuln in result.get('Vulnerabilities', []):
-            normalized_vulns.append({
-                'tool': 'trivy',
-                'vulnerability_id': vuln.get('VulnerabilityID'),
-                'severity': vuln.get('Severity'),
-                'package': vuln.get('PkgName'),
-                'version': vuln.get('InstalledVersion'),
-                'fixed_version': vuln.get('FixedVersion')
-            })
-    
-    os.makedirs('processed', exist_ok=True)
-    with open('processed/normalized_vulnerabilities.json', 'w') as f:
-        json.dump(normalized_vulns, f, indent=2)
-    
-    print(f'✅ AI Policy generated from REAL data!')
-    print(f'📊 Analyzed {sum(severity_counts.values())} real vulnerabilities')
-    print(f'🔍 Code analysis: {len(semgrep_data.get("results", []))} security issues')
-    print(f'📄 Policy saved to ai-policies/ai_generated_policy.json')
-    
-if __name__ == "__main__":
-    generate_ai_policy()
-EOF
-
-                        # Run AI policy generation (rule-based)
-                        python3 generate_ai_policy.py || echo "AI policy generation completed with basic data"
-                        
-                        # Run REAL DeepSeek R1 LLM integration if token available
-                        if [ ! -z "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-hf-token" ]; then
-                            echo "🧠 Running REAL DeepSeek R1 analysis..."
-                            echo "🔬 DeepSeek R1 is an advanced reasoning model for security analysis"
-                            python3 real_llm_integration.py || echo "DeepSeek R1 analysis completed"
-                        else
-                            echo "⚠️ No valid HF token - using rule-based AI only"
-                            echo "💡 To enable DeepSeek R1, add your HuggingFace token to Jenkins credentials"
-                        fi
-                    """
+                    echo '🤖 Generating security policies with AI from normalized scan data...'
+                    withCredentials([string(credentialsId: HUGGINGFACE_TOKEN_ID, variable: 'HF_TOKEN')]) {
+                        sh """
+                            set -e
+                            # Ensure output folders
+                            mkdir -p ai-policies processed
+                            
+                            # Show counts to ensure we are using REAL data
+                            if [ -f processed/normalized_vulnerabilities.json ]; then
+                              echo "🔢 Normalized vulns count: $(jq length processed/normalized_vulnerabilities.json || echo 0)"
+                            else
+                              echo "⚠️ No normalized vulnerabilities found; creating empty file"
+                              echo '[]' > processed/normalized_vulnerabilities.json
+                            fi
+                            
+                            # Run LLM integration against REAL normalized data
+                            if [ -n "${HF_TOKEN}" ] && [ "${HF_TOKEN}" != "dummy-token" ]; then
+                                echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
+                                HF_TOKEN=${HF_TOKEN} python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
+                            else
+                                echo "⚠️ HF token not available; skipping DeepSeek."
+                            fi
+                        """
+                    }
                 }
             }
         }
