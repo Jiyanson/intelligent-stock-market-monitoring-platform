@@ -233,9 +233,9 @@ pipeline {
                     sh """
                         mkdir -p processed
                         docker run --rm \
-                          -v $(pwd)/reports:/reports \
-                          -v $(pwd)/processed:/output \
-                          -v $(pwd)/jenkins-reports:/work \
+                          -v \$(pwd)/reports:/reports \
+                          -v \$(pwd)/processed:/output \
+                          -v \$(pwd)/jenkins-reports:/work \
                           -w /work \
                           python:3.11-slim \
                           sh -c 'pip install -q requests && python process_vulnerabilities.py' || echo "Normalization completed"
@@ -257,16 +257,16 @@ pipeline {
                             
                             # Show counts to ensure we are using REAL data
                             if [ -f processed/normalized_vulnerabilities.json ]; then
-                              echo "🔢 Normalized vulns count: $(jq length processed/normalized_vulnerabilities.json || echo 0)"
+                              echo "🔢 Normalized vulns count: \$(jq length processed/normalized_vulnerabilities.json || echo 0)"
                             else
                               echo "⚠️ No normalized vulnerabilities found; creating empty file"
                               echo '[]' > processed/normalized_vulnerabilities.json
                             fi
                             
                             # Run LLM integration against REAL normalized data
-                            if [ -n "${HF_TOKEN}" ] && [ "${HF_TOKEN}" != "dummy-token" ]; then
+                            if [ -n "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-token" ]; then
                                 echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
-                                HF_TOKEN=${HF_TOKEN} python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
+                                HF_TOKEN=\$HF_TOKEN python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
                             else
                                 echo "⚠️ HF token not available; skipping DeepSeek."
                             fi
