@@ -58,10 +58,11 @@ pipeline {
                             echo '🔍 Running SAST with Semgrep...'
                             sh """
                                 mkdir -p reports
-                                docker run --rm -v \$(pwd):/src returntocorp/semgrep:latest \\
-                                    --config=p/python \\
-                                    --json \\
-                                    --output=/src/reports/semgrep-report.json \\
+                                docker run --rm -v \$(pwd):/src returntocorp/semgrep:latest \
+                                    semgrep scan \
+                                    --config=p/python \
+                                    --json \
+                                    --output=/src/reports/semgrep-report.json \
                                     /src || echo "Semgrep scan completed"
                             """
                         }
@@ -107,7 +108,7 @@ pipeline {
                                     -v dependency-check-data:/usr/share/dependency-check/data \
                                     owasp/dependency-check:latest \
                                     --scan /src \
-                                    --format "JSON,HTML" \
+                                    -f JSON -f HTML \
                                     --out /src/reports \
                                     --project "Stock Market Platform" || echo "Dependency check completed"
                             """
@@ -132,7 +133,8 @@ pipeline {
 
                                 # Fetch HTML template and render HTML report
                                 curl -fsSL -o reports/trivy-html.tmpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl || true
-                                docker run --rm -v \$(pwd)/reports:/reports \
+                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                                    -v \$(pwd)/reports:/reports \
                                     aquasec/trivy:latest image \
                                     --format template \
                                     --template @/reports/trivy-html.tmpl \
@@ -235,7 +237,7 @@ pipeline {
                         docker run --rm \
                           -v \$(pwd)/reports:/reports \
                           -v \$(pwd)/processed:/output \
-                          -v \$(pwd)/jenkins-reports:/work \
+                          -v \$(pwd)/reports:/work \
                           -w /work \
                           python:3.11-slim \
                           sh -c 'pip install -q requests && python process_vulnerabilities.py' || echo "Normalization completed"
@@ -257,7 +259,16 @@ pipeline {
                             
                             # Show counts to ensure we are using REAL data
                             if [ -f processed/normalized_vulnerabilities.json ]; then
-                              echo "🔢 Normalized vulns count: \$(jq length processed/normalized_vulnerabilities.json || echo 0)"
+                              COUNT=\$(python3 - <<'PY'
+import json, sys
+try:
+    with open('processed/normalized_vulnerabilities.json') as f:
+        print(len(json.load(f)))
+except Exception:
+    print(0)
+PY
+)
+echo "🔢 Normalized vulns count: \${COUNT}"
                             else
                               echo "⚠️ No normalized vulnerabilities found; creating empty file"
                               echo '[]' > processed/normalized_vulnerabilities.json
@@ -266,7 +277,7 @@ pipeline {
                             # Run LLM integration against REAL normalized data
                             if [ -n "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-token" ]; then
                                 echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
-                                HF_TOKEN=\$HF_TOKEN python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
+                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app ai-security-processor:latest python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
                             else
                                 echo "⚠️ HF token not available; skipping DeepSeek."
                             fi
