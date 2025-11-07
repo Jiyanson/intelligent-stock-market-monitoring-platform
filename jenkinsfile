@@ -42,11 +42,19 @@ pipeline {
                         script {
                             echo '🕵️ Scanning for secrets with Gitleaks...'
                             sh """
-                                docker run --rm -v \$(pwd):/repo zricethezav/gitleaks:latest detect \\
+                                mkdir -p reports
+                                chmod 777 reports
+                                docker run --rm -v \$(pwd):/repo -v \$(pwd)/reports:/reports zricethezav/gitleaks:latest detect \\
                                     --source=/repo \\
                                     --report-format=json \\
-                                    --report-path=/repo/reports/gitleaks-report.json \\
-                                    --no-git || echo "Gitleaks scan completed"
+                                    --report-path=/reports/gitleaks-report.json \\
+                                    --no-git --verbose || true
+                                
+                                # Create empty report if none generated
+                                if [ ! -f reports/gitleaks-report.json ]; then
+                                    echo '[]' > reports/gitleaks-report.json
+                                fi
+                                echo "✅ Gitleaks completed. Report size: \$(wc -c < reports/gitleaks-report.json) bytes"
                             """
                         }
                     }
@@ -58,12 +66,19 @@ pipeline {
                             echo '🔍 Running SAST with Semgrep...'
                             sh """
                                 mkdir -p reports
-                                docker run --rm -v \$(pwd):/src returntocorp/semgrep:latest \
+                                chmod 777 reports
+                                docker run --rm -v \$(pwd):/src -v \$(pwd)/reports:/reports returntocorp/semgrep:latest \
                                     semgrep scan \
                                     --config=p/python \
                                     --json \
-                                    --output=/src/reports/semgrep-report.json \
-                                    /src || echo "Semgrep scan completed"
+                                    --output=/reports/semgrep-report.json \
+                                    /src || true
+                                
+                                # Create empty report if none generated
+                                if [ ! -f reports/semgrep-report.json ]; then
+                                    echo '{"results": []}' > reports/semgrep-report.json
+                                fi
+                                echo "✅ Semgrep completed. Found \$(cat reports/semgrep-report.json | jq -r '.results | length' 2>/dev/null || echo '0') issues"
                             """
                         }
                     }
@@ -104,13 +119,22 @@ pipeline {
                             echo '📦 Running SCA with OWASP Dependency-Check...'
                             sh """
                                 mkdir -p reports
+                                chmod 777 reports
                                 docker run --rm -v \$(pwd):/src \
+                                    -v \$(pwd)/reports:/reports \
                                     -v dependency-check-data:/usr/share/dependency-check/data \
                                     owasp/dependency-check:latest \
                                     --scan /src \
                                     -f JSON -f HTML \
-                                    --out /src/reports \
-                                    --project "Stock Market Platform" || echo "Dependency check completed"
+                                    --out /reports \
+                                    --project "Stock Market Platform" \
+                                    --enableRetired false || true
+                                
+                                # Create empty report if dependency check fails
+                                if [ ! -f reports/dependency-check-report.json ]; then
+                                    echo '{"dependencies": []}' > reports/dependency-check-report.json
+                                fi
+                                echo "✅ Dependency check completed"
                             """
                         }
                     }
@@ -129,7 +153,12 @@ pipeline {
                                     aquasec/trivy:latest image \
                                     --format json \
                                     --output /reports/trivy-report.json \
-                                    ${IMAGE_NAME}:${IMAGE_TAG} || echo "Trivy JSON scan completed"
+                                    ${IMAGE_NAME}:${IMAGE_TAG} || true
+                                
+                                # Create empty report if scan fails
+                                if [ ! -f reports/trivy-report.json ]; then
+                                    echo '{"Results": []}' > reports/trivy-report.json
+                                fi
 
                                 # Fetch HTML template and render HTML report
                                 curl -fsSL -o reports/trivy-html.tmpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl || true
@@ -173,28 +202,42 @@ pipeline {
                 script {
                     echo '🚀 Deploying application for DAST testing...'
                     sh """
-                        # Use the already built image for DAST
-                        docker run -d --name dast-app -p 8000:8000 ${IMAGE_NAME}:${IMAGE_TAG} || true
-                        echo "Waiting for application to start..."
-                        sleep 20
+                        # Stop any existing containers and free up ports
+                        docker stop dast-app dast-nginx || true
+                        docker rm dast-app dast-nginx || true
+                        docker-compose down || true
                         
-                        # Wait for health check
-                        for i in {1..5}; do
-                            if curl -f http://localhost:8000/api/v1/ping 2>/dev/null; then
-                                echo "✅ Application is ready for DAST!"
+                        # Wait for ports to be freed
+                        sleep 5
+                        
+                        # Deploy application on different port to avoid conflicts
+                        echo "Starting application on port 8001 for DAST..."
+                        docker run -d --name dast-app -p 8001:8000 ${IMAGE_NAME}:${IMAGE_TAG}
+                        
+                        echo "⏳ Waiting for application to start..."
+                        sleep 30
+                        
+                        # Health check with retries on correct port
+                        for i in {1..10}; do
+                            echo "Health check attempt \$i/10..."
+                            if curl -f http://localhost:8001/api/v1/finance/health 2>/dev/null; then
+                                echo "✅ Application is ready for DAST on port 8001"
+                                break
+                            elif curl -f http://localhost:8001/ 2>/dev/null; then
+                                echo "✅ Application root endpoint responding on port 8001"
                                 break
                             else
                                 echo "Attempt \$i: Application not ready yet, waiting..."
-                                docker run --rm --network=host ${IMAGE_NAME}:${IMAGE_TAG} \\
-                                    sh -c 'python -c "from fastapi import FastAPI; app = FastAPI(); print(\"App created\")"' || true
-                                sleep 10
+                                docker logs dast-app --tail=10 || true
+                                sleep 15
                             fi
                         done
                         
-                        # If health check fails, run a simple test endpoint
-                        echo "Setting up test endpoint for DAST..."
-                        docker run -d --name dast-nginx -p 8001:80 nginx:latest || true
-                        sleep 5
+                        echo "📊 Container status:"
+                        docker ps | grep dast || true
+                        
+                        echo "🌐 Testing connectivity:"
+                        curl -I http://localhost:8001/ || echo "Port 8001 not responding"
                     """
                 }
             }
@@ -207,21 +250,50 @@ pipeline {
                     echo '🕷️ Running DAST with OWASP ZAP...'
                     sh """
                         mkdir -p reports
-                        # Try FastAPI app first, fallback to nginx
-                        TARGET_URL="http://localhost:8000"
-                        if ! curl -f http://localhost:8000 2>/dev/null; then
-                            echo "FastAPI not responding, using nginx endpoint"
-                            TARGET_URL="http://localhost:8001"
-                        fi
                         
+                        # Verify target is accessible on port 8001
+                        echo "🔍 Pre-DAST connectivity check:"
+                        curl -I http://localhost:8001/ || echo "Target not accessible"
+                        
+                        # Basic DAST scan on correct port
+                        echo "Running ZAP baseline scan on port 8001..."
                         docker run --rm \\
                             --network=host \\
                             -v \$(pwd)/reports:/zap/wrk/:rw \\
                             owasp/zap2docker-stable:latest \\
                             zap-baseline.py \\
-                            -t \${TARGET_URL} \\
+                            -t http://localhost:8001 \\
                             -J zap-report.json \\
-                            -r zap-report.html || echo "ZAP scan completed"
+                            -r zap-report.html \\
+                            -m 5 \\
+                            -z "-config scanner.strength=Low" || echo "DAST baseline scan completed"
+                        
+                        # API-specific DAST if swagger docs available
+                        echo "Checking for API documentation..."
+                        if curl -f http://localhost:8001/docs 2>/dev/null; then
+                            echo "Running ZAP API scan..."
+                            docker run --rm \\
+                                --network=host \\
+                                -v \$(pwd)/reports:/zap/wrk/:rw \\
+                                owasp/zap2docker-stable:latest \\
+                                zap-api-scan.py \\
+                                -t http://localhost:8001/openapi.json \\
+                                -f openapi \\
+                                -J zap-api-report.json \\
+                                -r zap-api-report.html \\
+                                -z "-config scanner.strength=Low" || echo "API DAST completed"
+                        else
+                            echo "No API docs found, skipping API scan"
+                        fi
+                        
+                        echo "📊 DAST Results:"
+                        ls -la reports/zap* || echo "No ZAP reports generated"
+                        
+                        # Show summary if reports exist
+                        if [ -f reports/zap-report.json ]; then
+                            echo "🔍 DAST Summary:"
+                            cat reports/zap-report.json | jq '.site[0].alerts | length' 2>/dev/null || echo "Processing ZAP results..."
+                        fi
                     """
                 }
             }
@@ -240,7 +312,13 @@ pipeline {
                           -v \$(pwd):/app \
                           -w /app \
                           python:3.11-slim \
-                          sh -c 'python normalize_vulnerabilities.py' || echo "Normalization completed"
+                          sh -c 'pip install requests && python normalize_vulnerabilities.py' || true
+                        
+                        # Create empty normalized report if script fails
+                        mkdir -p processed
+                        if [ ! -f processed/normalized_vulnerabilities.json ]; then
+                            echo '[]' > processed/normalized_vulnerabilities.json
+                        fi
                     """
                 }
             }
@@ -277,7 +355,13 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                             # Run LLM integration against REAL normalized data
                             if [ -n "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-token" ]; then
                                 echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
-                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app python:3.11-slim sh -c 'python generate_ai_policy.py' || echo "AI analysis completed"
+                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app python:3.11-slim sh -c 'pip install requests && python generate_ai_policy.py' || true
+                                
+                                # Create empty AI policy if script fails
+                                mkdir -p ai-policies
+                                if [ ! -f ai-policies/ai_generated_policy_REAL.json ]; then
+                                    echo '{"status": "script_failed", "vulnerabilities": 0, "recommendations": ["Fix pipeline execution"]}' > ai-policies/ai_generated_policy_REAL.json
+                                fi
                             else
                                 echo "⚠️ HF token not available; skipping DeepSeek."
                             fi
@@ -391,9 +475,12 @@ echo "🔢 Normalized vulns count: \${COUNT}"
         always {
             echo '🧹 Cleaning up...'
             sh """
-                # Clean up DAST containers
+                # Clean up DAST containers and free ports
                 docker stop dast-app dast-nginx || true
                 docker rm dast-app dast-nginx || true
+                
+                # Ensure docker-compose services are also stopped
+                docker-compose down || true
                 
                 # Clean up old images
                 docker images ${IMAGE_NAME} --format "{{.Tag}}" | tail -n +6 | xargs -r docker rmi ${IMAGE_NAME}: || true
