@@ -1,0 +1,40 @@
+[
+  {
+    "Description": "HuggingFace API Token",
+    "StartLine": 8,
+    "EndLine": 8,
+    "StartColumn": 12,
+    "EndColumn": 60,
+    "Match": "HF_TOKEN=hf_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN",
+    "Secret": "hf_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN",
+    "File": ".env",
+    "Commit": "3ebb5be54435e1197a75fe26014c9ee8bf4b1502",
+    "Entropy": 4.2,
+    "Author": "saad@example.com",
+    "Email": "saad@example.com",
+    "Date": "2024-11-07T10:30:15Z",
+    "Message": "Add HuggingFace R1 API integration",
+    "Tags": [],
+    "RuleID": "huggingface-access-token",
+    "Fingerprint": "3ebb5be54435e1197a75fe26014c9ee8bf4b1502:.env:huggingface-access-token:8"
+  },
+  {
+    "Description": "Database Password",
+    "StartLine": 5,
+    "EndLine": 5,
+    "StartColumn": 18,
+    "EndColumn": 35,
+    "Match": "DATABASE_URL=postgresql://fastapi:fastapi123@localhost/fastapi_db",
+    "Secret": "fastapi123",
+    "File": ".env",
+    "Commit": "3ebb5be54435e1197a75fe26014c9ee8bf4b1502",
+    "Entropy": 3.4,
+    "Author": "saad@example.com",
+    "Email": "saad@example.com",
+    "Date": "2024-11-07T10:30:15Z",
+    "Message": "Add database configuration",
+    "Tags": [],
+    "RuleID": "postgres-password",
+    "Fingerprint": "3ebb5be54435e1197a75fe26014c9ee8bf4b1502:.env:postgres-password:5"
+  }
+]

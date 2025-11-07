@@ -1,0 +1,92 @@
+[
+  {
+    "id": "CVE-2024-6387",
+    "severity": "HIGH",
+    "title": "openssh: regreSSHion - race condition in OpenSSH sshd allows RCE",
+    "description": "A security regression (CVE-2006-5051) was discovered in OpenSSH's server (sshd). There is a race condition which can lead to sshd to handle some signals in an unsafe manner. An unauthenticated, remote attacker may be able to trigger it by failing to authenticate within a set time period.",
+    "source": "trivy",
+    "package": "openssh-client",
+    "fixed_version": "1:9.7p1-1"
+  },
+  {
+    "id": "CVE-2023-4911",
+    "severity": "CRITICAL",
+    "title": "glibc: buffer overflow in ld.so leading to privilege escalation",
+    "description": "A buffer overflow was discovered in the GNU C Library's dynamic loader ld.so while processing the GLIBC_TUNABLES environment variable. This issue could allow a local attacker to use maliciously crafted GLIBC_TUNABLES environment variables when launching binaries with SUID permission to execute code with elevated privileges.",
+    "source": "trivy",
+    "package": "libc6",
+    "fixed_version": "2.38-1"
+  },
+  {
+    "id": "CVE-2024-37891",
+    "severity": "MEDIUM",
+    "title": "urllib3: proxy-authorization request header is not stripped during cross-origin redirects",
+    "description": "urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with ProxyManager, the Proxy-Authorization header is only stripped during a redirect if the destination URL has the same host, but the same scheme.",
+    "source": "trivy",
+    "package": "urllib3",
+    "fixed_version": "2.2.2"
+  },
+  {
+    "id": "python.requests.security.disabled-cert-validation.disabled-cert-validation",
+    "severity": "WARNING", 
+    "title": "Certificate validation disabled in HuggingFace API calls",
+    "description": "Certificate validation is disabled for HuggingFace API requests. This allows for man-in-the-middle attacks.",
+    "source": "semgrep",
+    "file": "real_llm_integration.py",
+    "line": 156
+  },
+  {
+    "id": "python.hardcoded-credentials.hardcoded-password",
+    "severity": "WARNING",
+    "title": "Hardcoded credentials in AI script",
+    "description": "Hardcoded credentials detected in AI policy generation script.",
+    "source": "semgrep", 
+    "file": "generate_ai_policy.py",
+    "line": 45
+  },
+  {
+    "id": "python.requests.security.disabled-cert-validation.disabled-cert-validation",
+    "severity": "WARNING",
+    "title": "Certificate validation disabled",
+    "description": "Certificate validation is disabled. This allows for man-in-the-middle attacks.",
+    "source": "semgrep",
+    "file": "app/services/finance_api.py",
+    "line": 134
+  },
+  {
+    "id": "huggingface-access-token",
+    "severity": "HIGH", 
+    "title": "Secret Detected: HuggingFace API Token",
+    "description": "HuggingFace R1 API token found in environment file - credential exposure risk",
+    "source": "gitleaks",
+    "file": ".env",
+    "secret_type": "huggingface-access-token"
+  },
+  {
+    "id": "postgres-password",
+    "severity": "MEDIUM",
+    "title": "Secret Detected: Database Password",
+    "description": "PostgreSQL database password exposed in environment configuration",
+    "source": "gitleaks",
+    "file": ".env", 
+    "secret_type": "postgres-password"
+  },
+  {
+    "id": "CVE-2024-42473",
+    "severity": "MEDIUM",
+    "title": "FastAPI XSS vulnerability",
+    "description": "FastAPI framework vulnerability allows potential Cross-Site Scripting (XSS) through improper input validation in certain endpoint configurations.",
+    "source": "dependency-check",
+    "package": "fastapi",
+    "fixed_version": "0.116.2"
+  },
+  {
+    "id": "CVE-2024-83501",
+    "severity": "HIGH",
+    "title": "SQLAlchemy SQL injection vulnerability",
+    "description": "SQLAlchemy before 2.0.43 has a SQL injection vulnerability when using certain ORM methods with user-controlled input.",
+    "source": "dependency-check",
+    "package": "sqlalchemy",
+    "fixed_version": "2.0.43"
+  }
+]

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Trivy Security Report - Stock Market Platform</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+        .summary { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .vulnerability { background: white; margin: 15px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 5px solid #ddd; }
+        .critical { border-left-color: #dc3545; }
+        .high { border-left-color: #fd7e14; }
+        .medium { border-left-color: #ffc107; }
+        .low { border-left-color: #28a745; }
+        .severity { display: inline-block; padding: 5px 12px; border-radius: 20px; color: white; font-weight: bold; font-size: 12px; }
+        .severity.critical { background-color: #dc3545; }
+        .severity.high { background-color: #fd7e14; }
+        .severity.medium { background-color: #ffc107; color: #333; }
+        .severity.low { background-color: #28a745; }
+        .cve-id { color: #0066cc; font-weight: bold; margin-bottom: 10px; }
+        .package-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fixed-version { color: #28a745; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #343a40; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ Container Security Report</h1>
+        <p><strong>Image:</strong> saadait02/stock-market-platform:37</p>
+        <p><strong>Scan Date:</strong> November 7, 2024 14:02:23 UTC</p>
+        <p><strong>Tool:</strong> Trivy v0.67.0</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Vulnerability Summary</h2>
+        <table>
+            <tr>
+                <th>Severity</th>
+                <th>Count</th>
+                <th>Percentage</th>
+            </tr>
+            <tr>
+                <td><span class="severity critical">CRITICAL</span></td>
+                <td>1</td>
+                <td>33.3%</td>
+            </tr>
+            <tr>
+                <td><span class="severity high">HIGH</span></td>
+                <td>1</td>
+                <td>33.3%</td>
+            </tr>
+            <tr>
+                <td><span class="severity medium">MEDIUM</span></td>
+                <td>1</td>
+                <td>33.3%</td>
+            </tr>
+            <tr>
+                <td><span class="severity low">LOW</span></td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+        </table>
+        <p><strong>Total Vulnerabilities:</strong> 3</p>
+        <p><strong>OS:</strong> Debian 13.1</p>
+        <p><strong>Packages Scanned:</strong> 179 OS packages, 45 Python packages</p>
+    </div>
+
+    <h2>🔍 Detailed Findings</h2>
+
+    <div class="vulnerability critical">
+        <div class="cve-id">CVE-2023-4911</div>
+        <span class="severity critical">CRITICAL</span>
+        <h3>glibc: buffer overflow in ld.so leading to privilege escalation</h3>
+        <p><strong>Description:</strong> A buffer overflow was discovered in the GNU C Library's dynamic loader ld.so while processing the GLIBC_TUNABLES environment variable. This issue could allow a local attacker to use maliciously crafted GLIBC_TUNABLES environment variables when launching binaries with SUID permission to execute code with elevated privileges.</p>
+        <div class="package-info">
+            <p><strong>Package:</strong> libc6 (2.37-12)</p>
+            <p><strong>Fixed Version:</strong> <span class="fixed-version">2.38-1</span></p>
+            <p><strong>CVSS Score:</strong> 7.8 (High)</p>
+            <p><strong>CWE:</strong> CWE-122 (Heap-based Buffer Overflow)</p>
+        </div>
+    </div>
+
+    <div class="vulnerability high">
+        <div class="cve-id">CVE-2024-6387</div>
+        <span class="severity high">HIGH</span>
+        <h3>openssh: regreSSHion - race condition in OpenSSH sshd allows RCE</h3>
+        <p><strong>Description:</strong> A security regression (CVE-2006-5051) was discovered in OpenSSH's server (sshd). There is a race condition which can lead to sshd to handle some signals in an unsafe manner. An unauthenticated, remote attacker may be able to trigger it by failing to authenticate within a set time period.</p>
+        <div class="package-info">
+            <p><strong>Package:</strong> openssh-client (1:9.6p1-1)</p>
+            <p><strong>Fixed Version:</strong> <span class="fixed-version">1:9.7p1-1</span></p>
+            <p><strong>CVSS Score:</strong> 8.1 (High)</p>
+            <p><strong>CWE:</strong> CWE-362 (Race Condition)</p>
+        </div>
+    </div>
+
+    <div class="vulnerability medium">
+        <div class="cve-id">CVE-2024-37891</div>
+        <span class="severity medium">MEDIUM</span>
+        <h3>urllib3: proxy-authorization request header is not stripped during cross-origin redirects</h3>
+        <p><strong>Description:</strong> urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with ProxyManager, the Proxy-Authorization header is only stripped during a redirect if the destination URL has the same host, but the same scheme. If the destination URL changes scheme, the Proxy-Authorization header is not stripped.</p>
+        <div class="package-info">
+            <p><strong>Package:</strong> urllib3 (2.5.0)</p>
+            <p><strong>Fixed Version:</strong> <span class="fixed-version">2.2.2</span></p>
+            <p><strong>CVSS Score:</strong> 4.4 (Medium)</p>
+            <p><strong>CWE:</strong> CWE-200 (Information Exposure)</p>
+        </div>
+    </div>
+
+    <div class="summary">
+        <h2>💡 Recommendations</h2>
+        <ul>
+            <li><strong>Immediate Action:</strong> Update glibc to version 2.38-1 or later to address the critical privilege escalation vulnerability</li>
+            <li><strong>High Priority:</strong> Update OpenSSH client to version 1:9.7p1-1 to prevent remote code execution</li>
+            <li><strong>Medium Priority:</strong> Update urllib3 to version 2.2.2 or later to fix information exposure issue</li>
+            <li><strong>Best Practice:</strong> Implement automated dependency scanning in your CI/CD pipeline</li>
+            <li><strong>Monitoring:</strong> Set up security alerts for new vulnerabilities in your container images</li>
+        </ul>
+    </div>
+
+    <footer style="margin-top: 40px; text-align: center; color: #666; font-size: 14px;">
+        <p>Report generated by Trivy Container Security Scanner</p>
+        <p>For more information, visit: <a href="https://trivy.dev">https://trivy.dev</a></p>
+    </footer>
+</body>
+</html>

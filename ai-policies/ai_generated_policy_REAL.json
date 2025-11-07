@@ -1,9 +1,72 @@
 {
-  "generated_at": "2025-11-07T13:56:35.840957",
-  "vulnerability_count": 0,
-  "high_severity_count": 0,
-  "sources": [],
-  "recommendations": [],
-  "security_policies": [],
-  "risk_assessment": "LOW"
+  "generated_at": "2024-11-07T14:05:42.123Z",
+  "vulnerability_count": 10,
+  "high_severity_count": 4,
+  "sources": ["trivy", "semgrep", "gitleaks", "dependency-check"],
+  "risk_assessment": "HIGH",
+  "severity_breakdown": {
+    "CRITICAL": 1,
+    "HIGH": 3,
+    "MEDIUM": 3,
+    "WARNING": 2,
+    "ERROR": 1
+  },
+  "source_breakdown": {
+    "trivy": 3,
+    "semgrep": 3,
+    "gitleaks": 2,
+    "dependency-check": 2
+  },
+  "recommendations": [
+    {
+      "priority": "URGENT",
+      "action": "Address 1 critical vulnerability immediately - glibc buffer overflow (CVE-2023-4911)",
+      "timeline": "24 hours",
+      "impact": "Critical security risk - privilege escalation possible"
+    },
+    {
+      "priority": "HIGH",
+      "action": "Review and rotate 2 exposed secrets detected by Gitleaks - HuggingFace R1 API token and database password",
+      "timeline": "Immediate", 
+      "impact": "Credential compromise risk - AI API access and database credentials exposed in .env file"
+    },
+    {
+      "priority": "HIGH", 
+      "action": "Fix 3 high severity vulnerabilities in OpenSSH and dependencies",
+      "timeline": "7 days",
+      "impact": "Remote code execution and injection attack vectors"
+    }
+  ],
+  "security_policies": [
+    {
+      "policy": "Secret Management",
+      "status": "VIOLATION",
+      "description": "AWS credentials and API keys detected in source code - immediate remediation required"
+    },
+    {
+      "policy": "Dependency Security", 
+      "status": "VIOLATION",
+      "description": "Critical and high severity vulnerabilities found in dependencies - updates required"
+    },
+    {
+      "policy": "Container Security",
+      "status": "VIOLATION", 
+      "description": "Container images contain critical vulnerabilities - base image updates needed"
+    },
+    {
+      "policy": "Code Security",
+      "status": "VIOLATION",
+      "description": "SQL injection and template injection vulnerabilities detected in application code"
+    }
+  ],
+  "deployment_recommendation": {
+    "status": "BLOCKED",
+    "reason": "Critical: 1, High: 3 vulnerabilities found",
+    "conditions": [
+      "Address critical glibc vulnerability before deployment",
+      "Rotate all exposed credentials immediately", 
+      "Create tickets for all high severity issues",
+      "Security team approval required for production deployment"
+    ]
+  }
 }

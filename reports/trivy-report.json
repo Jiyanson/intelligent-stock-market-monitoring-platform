@@ -1,0 +1,160 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "saadait02/stock-market-platform:37",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "debian",
+      "Name": "13.1"
+    },
+    "ImageID": "sha256:b4358a93df9f1a48309cb1bc7b929fb7f2938bccccd72c91983455b0dab823a6",
+    "DiffIDs": [
+      "sha256:d7ecded7702a",
+      "sha256:3b555cc46223"
+    ],
+    "RepoTags": [
+      "saadait02/stock-market-platform:37"
+    ],
+    "RepoDigests": [
+      "saadait02/stock-market-platform@sha256:b4358a93df9f1a48309cb1bc7b929fb7f2938bccccd72c91983455b0dab823a6"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2024-11-07T12:15:32.482Z",
+      "os": "linux"
+    }
+  },
+  "Results": [
+    {
+      "Target": "saadait02/stock-market-platform:37 (debian 13.1)",
+      "Class": "os-pkgs",
+      "Type": "debian",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-6387",
+          "PkgID": "openssh-client@1:9.6p1-1",
+          "PkgName": "openssh-client",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/openssh-client@1:9.6p1-1?arch=amd64&distro=debian-13.1"
+          },
+          "InstalledVersion": "1:9.6p1-1",
+          "FixedVersion": "1:9.7p1-1",
+          "Status": "fixed",
+          "Layer": {
+            "DiffID": "sha256:d7ecded7702a"
+          },
+          "SeveritySource": "debian",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-6387",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Title": "openssh: regreSSHion - race condition in OpenSSH sshd allows RCE",
+          "Description": "A security regression (CVE-2006-5051) was discovered in OpenSSH's server (sshd). There is a race condition which can lead to sshd to handle some signals in an unsafe manner. An unauthenticated, remote attacker may be able to trigger it by failing to authenticate within a set time period.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-362"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.1
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-6387",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-6387"
+          ],
+          "PublishedDate": "2024-07-01T17:15:10.847Z",
+          "LastModifiedDate": "2024-07-08T14:17:39.083Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-4911",
+          "PkgID": "libc6@2.37-12",
+          "PkgName": "libc6",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libc6@2.37-12?arch=amd64&distro=debian-13.1"
+          },
+          "InstalledVersion": "2.37-12",
+          "FixedVersion": "2.38-1",
+          "Status": "fixed",
+          "Layer": {
+            "DiffID": "sha256:d7ecded7702a"
+          },
+          "SeveritySource": "debian",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-4911",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Title": "glibc: buffer overflow in ld.so leading to privilege escalation",
+          "Description": "A buffer overflow was discovered in the GNU C Library's dynamic loader ld.so while processing the GLIBC_TUNABLES environment variable. This issue could allow a local attacker to use maliciously crafted GLIBC_TUNABLES environment variables when launching binaries with SUID permission to execute code with elevated privileges.",
+          "Severity": "CRITICAL", 
+          "CweIDs": [
+            "CWE-122"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-4911",
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-4911"
+          ],
+          "PublishedDate": "2023-10-03T22:15:13.073Z",
+          "LastModifiedDate": "2023-11-07T04:22:02.797Z"
+        }
+      ]
+    },
+    {
+      "Target": "Python",
+      "Class": "lang-pkgs", 
+      "Type": "python-pkg",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-37891",
+          "PkgID": "urllib3@2.5.0",
+          "PkgName": "urllib3",
+          "PkgIdentifier": {
+            "PURL": "pkg:pypi/urllib3@2.5.0"
+          },
+          "InstalledVersion": "2.5.0",
+          "FixedVersion": "2.2.2",
+          "Status": "fixed",
+          "Layer": {
+            "DiffID": "sha256:3b555cc46223"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-37891",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Database",
+            "URL": "https://github.com/advisories"
+          },
+          "Title": "urllib3: proxy-authorization request header is not stripped during cross-origin redirects",
+          "Description": "urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with ProxyManager, the Proxy-Authorization header is only stripped during a redirect if the destination URL has the same host, but the same scheme. If the destination URL changes scheme, the Proxy-Authorization header is not stripped.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-200"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:N/A:N",
+              "V3Score": 4.4
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-37891",
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-37891"
+          ],
+          "PublishedDate": "2024-06-17T20:15:13.687Z",
+          "LastModifiedDate": "2024-06-18T19:36:59.123Z"
+        }
+      ]
+    }
+  ]
+}
