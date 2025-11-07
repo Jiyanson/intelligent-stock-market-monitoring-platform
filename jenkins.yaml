@@ -356,10 +356,16 @@ EOF
             }
         }
         
+        // OPTION 3: Skip Docker Push for Demo - Only push on main branch
         stage('Push to Docker Hub') {
+            when {
+                expression { 
+                    env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' 
+                }
+            }
             steps {
                 script {
-                    echo '🚀 Pushing image to Docker Hub...'
+                    echo '🚀 Pushing image to Docker Hub (Main Branch Only)...'
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
                             echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
@@ -443,6 +449,16 @@ EOF
                     
                     TOTAL_REPORTS=$(find reports/ -name "*.json" -o -name "*.html" | wc -l 2>/dev/null || echo "0")
                     echo "📋 Reports generated: $TOTAL_REPORTS"
+                    
+                    # Check if AI policy was generated
+                    if [ -f ai-policies/ai_generated_policy_REAL.json ]; then
+                        echo "🤖 AI Policy Generation: ✅ SUCCESS"
+                        echo "   - DeepSeek R1 Integration: ✅ WORKING"
+                        echo "   - Policy Recommendations: ✅ GENERATED"
+                    else
+                        echo "🤖 AI Policy Generation: ⚠️ FALLBACK"
+                    fi
+                    
                     echo "🎊 Pipeline execution completed successfully!"
                 '''
             }
