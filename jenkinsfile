@@ -247,17 +247,73 @@ EOFTRIVY
             }
         }
         
+        stage('AI Integration - Generate Security Policy') {
+            steps {
+                script {
+                    echo '🤖 Generating AI-powered security policy with HuggingFace...'
+                    withCredentials([string(credentialsId: "${HUGGINGFACE_TOKEN_ID}", variable: 'HF_TOKEN')]) {
+                        sh '''
+                            echo "🚀 Starting AI policy generation with DeepSeek R1..."
+                            
+                            # Create directories if they don't exist
+                            mkdir -p ai-policies processed
+                            
+                            # Copy reports to processed directory for AI analysis
+                            if [ -d "reports" ]; then
+                                cp reports/*.json processed/ 2>/dev/null || true
+                            fi
+                            
+                            # Run AI policy generation with HuggingFace credentials
+                            echo "🔑 Using HuggingFace API credentials from Jenkins..."
+                            export HF_TOKEN="${HF_TOKEN}"
+                            
+                            # Install required Python packages and run AI generation
+                            python3 -c "
+import sys
+import subprocess
+import os
+
+# Install required packages
+subprocess.run([sys.executable, '-m', 'pip', 'install', '--quiet', 'requests', 'json5'], check=True)
+
+# Now run the AI policy generation
+exec(open('generate_real_ai_policy.py').read())
+" || echo "AI generation completed with warnings"
+                            
+                            # Verify AI outputs
+                            if [ -f "ai-policies/ai_generated_policy.json" ]; then
+                                echo "✅ AI policy generated successfully!"
+                                AI_POLICY_SIZE=$(wc -c < ai-policies/ai_generated_policy.json)
+                                echo "📄 Policy size: $AI_POLICY_SIZE bytes"
+                            else
+                                echo "⚠️ AI policy file not found, creating fallback..."
+                                python3 generate_ai_policy.py || echo "Fallback generation completed"
+                            fi
+                            
+                            # List generated files
+                            echo "📁 Generated AI files:"
+                            find ai-policies/ -name "*.json" -exec echo "  📋 {}" \\;
+                            find processed/ -name "*.json" -exec echo "  📊 {}" \\;
+                        '''
+                    }
+                }
+            }
+        }
+        
         stage('Generate Reports Summary') {
             steps {
                 script {
                     echo '📊 Generating security reports summary...'
                     sh '''
-                        echo "Generating summary report..."
+                        echo "Generating comprehensive summary report..."
                         
                         TOTAL_REPORTS=$(find reports/ -name "*.json" | wc -l || echo "0")
-                        echo "📊 Security Reports Summary"
-                        echo "=========================="
-                        echo "📁 Total reports generated: $TOTAL_REPORTS"
+                        AI_REPORTS=$(find ai-policies/ -name "*.json" | wc -l || echo "0")
+                        
+                        echo "📊 DevSecOps Pipeline Summary"
+                        echo "============================="
+                        echo "📁 Security reports: $TOTAL_REPORTS"
+                        echo "🤖 AI-generated policies: $AI_REPORTS"
                         
                         if [ -f reports/gitleaks-report.json ]; then
                             SECRETS_COUNT=$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
@@ -279,8 +335,28 @@ EOFTRIVY
                             echo "🔒 Container vulnerabilities: $CONTAINER_VULNS"
                         fi
                         
-                        echo "=========================="
+                        # Display AI policy summary if available
+                        if [ -f ai-policies/ai_generated_policy.json ]; then
+                            echo "🤖 AI Policy Analysis:"
+                            python3 -c "
+import json
+try:
+    with open('ai-policies/ai_generated_policy.json', 'r') as f:
+        policy = json.load(f)
+    print(f'  📈 Risk Level: {policy.get(\"risk_assessment\", \"Unknown\")}')
+    print(f'  🚨 Critical Issues: {policy.get(\"severity_breakdown\", {}).get(\"CRITICAL\", 0)}')
+    print(f'  📋 Recommendations: {len(policy.get(\"recommendations\", []))}')
+except Exception as e:
+    print(f'  ⚠️ Could not parse AI policy: {e}')
+"
+                        fi
+                        
+                        echo "============================="
                         echo "✅ Summary report generated successfully!"
+                        echo "📋 All reports available in:"
+                        echo "   📁 reports/ - Security scan results"
+                        echo "   🤖 ai-policies/ - AI-generated policies"
+                        echo "   📊 processed/ - Normalized vulnerability data"
                     '''
                 }
             }
