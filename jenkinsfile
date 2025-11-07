@@ -104,10 +104,10 @@ pipeline {
 EOF
                                 fi
                                 
-                                LEAK_COUNT=\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))")
+                                LEAK_COUNT=\\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))")
                                 echo ""
                                 echo "✅ Gitleaks scan completed successfully!"
-                                echo "📊 Detected \$LEAK_COUNT potential secrets"
+                                echo "📊 Detected \\$LEAK_COUNT potential secrets"
                                 echo "📄 Report saved to: reports/gitleaks-report.json"
                             """
                         }
@@ -330,7 +330,7 @@ EOF
 <body>
 <h1>OWASP Dependency-Check Report</h1>
 <h2>Project: Stock Market Platform</h2>
-<p>Report Date: $(date)</p>
+<p>Report Date: \\$(date)</p>
 <h3>Summary</h3>
 <p>Dependencies scanned: 2</p>
 <p>Vulnerabilities found: 2</p>
@@ -338,13 +338,13 @@ EOF
 </html>
 HTMLEOF
                                 
-                                DEPS_COUNT=\$(cat reports/dependency-check-report.json | grep -o '"fileName"' | wc -l || echo "2")
-                                VULNS_COUNT=\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l || echo "2")
+                                DEPS_COUNT=\\$(cat reports/dependency-check-report.json | grep -o '"fileName"' | wc -l || echo "2")
+                                VULNS_COUNT=\\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l || echo "2")
                                 
                                 echo ""
                                 echo "📊 Dependency Analysis Results:"
-                                echo "   ✅ Dependencies scanned: \$DEPS_COUNT"
-                                echo "   🚨 Vulnerabilities found: \$VULNS_COUNT"
+                                echo "   ✅ Dependencies scanned: \\$DEPS_COUNT"
+                                echo "   🚨 Vulnerabilities found: \\$VULNS_COUNT"
                                 echo "   📄 JSON report: reports/dependency-check-report.json"
                                 echo "   🌐 HTML report: reports/dependency-check-report.html"
                                 echo ""
@@ -411,7 +411,7 @@ HTMLEOF
         <p><strong>Image:</strong> saadait02/stock-market-platform:latest</p>
         <p><strong>Total Vulnerabilities:</strong> 631</p>
         <p><strong>HIGH/CRITICAL:</strong> 55 | <strong>MEDIUM:</strong> 150 | <strong>LOW:</strong> 424</p>
-        <p><strong>Scan Date:</strong> $(date '+%m/%d/%Y %H:%M:%S')</p>
+        <p><strong>Scan Date:</strong> \\$(date '+%m/%d/%Y %H:%M:%S')</p>
     </div>
     
     <h2>🚨 High & Critical Vulnerabilities</h2>
@@ -427,13 +427,13 @@ EOF
                                 fi
                                 
                                 # Count vulnerabilities for summary
-                                TOTAL_VULNS=\$(grep -o '"Severity"' reports/trivy-report.json | wc -l || echo "631")
-                                HIGH_CRITICAL=\$(grep -E '"Severity":"HIGH|"Severity":"CRITICAL' reports/trivy-report.json | wc -l || echo "55")
+                                TOTAL_VULNS=\\$(grep -o '"Severity"' reports/trivy-report.json | wc -l || echo "631")
+                                HIGH_CRITICAL=\\$(grep -E '"Severity":"HIGH|"Severity":"CRITICAL' reports/trivy-report.json | wc -l || echo "55")
                                 
                                 echo ""
                                 echo "📊 Trivy Scan Results Summary:"
-                                echo "    🔍 Total vulnerabilities: \$TOTAL_VULNS"
-                                echo "    🚨 High/Critical: \$HIGH_CRITICAL"
+                                echo "    🔍 Total vulnerabilities: \\$TOTAL_VULNS"
+                                echo "    🚨 High/Critical: \\$HIGH_CRITICAL"
                                 echo "    📄 JSON report: reports/trivy-report.json"
                                 echo "    🌐 HTML report: reports/trivy-report.html"
                                 echo ""
@@ -452,8 +452,8 @@ EOF
                                     mkdir -p reports
                                     docker run --rm \\
                                         -e SONAR_HOST_URL="${SONARQUBE_URL}" \\
-                                        -e SONAR_LOGIN="\${SONAR_TOKEN}" \\
-                                        -v \$(pwd):/usr/src \\
+                                        -e SONAR_LOGIN="\\${SONAR_TOKEN}" \\
+                                        -v \\$(pwd):/usr/src \\
                                         sonarsource/sonar-scanner-cli:latest \\
                                         -Dsonar.projectKey=stock-market-platform \\
                                         -Dsonar.sources=app/ \\
@@ -492,7 +492,7 @@ EOF
                         
                         # Health check with retries on correct port
                         for i in {1..10}; do
-                            echo "Health check attempt \$i/10..."
+                            echo "Health check attempt \\$i/10..."
                             if curl -f http://localhost:8001/api/v1/finance/health 2>/dev/null; then
                                 echo "✅ Application is ready for DAST on port 8001"
                                 break
@@ -500,7 +500,7 @@ EOF
                                 echo "✅ Application root endpoint responding on port 8001"
                                 break
                             else
-                                echo "Attempt \$i: Application not ready yet, waiting..."
+                                echo "Attempt \\$i: Application not ready yet, waiting..."
                                 docker logs dast-app --tail=10 || true
                                 sleep 15
                             fi
@@ -650,14 +650,14 @@ EOF
 HTMLEOF
                         
                         # Count alerts
-                        ALERT_COUNT=\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l || echo "3")
-                        HIGH_ALERTS=\$(cat reports/zap-report.json | grep -o '"riskcode":"3\\|"riskcode":"4' | wc -l || echo "0")
-                        MEDIUM_ALERTS=\$(cat reports/zap-report.json | grep -o '"riskcode":"2' | wc -l || echo "0")
-                        LOW_ALERTS=\$(cat reports/zap-report.json | grep -o '"riskcode":"1' | wc -l || echo "3")
+                        ALERT_COUNT=\\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l || echo "3")
+                        HIGH_ALERTS=\\$(cat reports/zap-report.json | grep -o '"riskcode":"3\\|"riskcode":"4' | wc -l || echo "0")
+                        MEDIUM_ALERTS=\\$(cat reports/zap-report.json | grep -o '"riskcode":"2' | wc -l || echo "0")
+                        LOW_ALERTS=\\$(cat reports/zap-report.json | grep -o '"riskcode":"1' | wc -l || echo "3")
                         
                         echo "📊 DAST Scan Results Summary:"
-                        echo "   🔍 Total alerts: \$ALERT_COUNT"
-                        echo "   🚨 High: \$HIGH_ALERTS | Medium: \$MEDIUM_ALERTS | Low: \$LOW_ALERTS"
+                        echo "   🔍 Total alerts: \\$ALERT_COUNT"
+                        echo "   🚨 High: \\$HIGH_ALERTS | Medium: \\$MEDIUM_ALERTS | Low: \\$LOW_ALERTS"
                         echo "   📄 JSON report: reports/zap-report.json"
                         echo "   🌐 HTML report: reports/zap-report.html"
                         echo ""
@@ -676,9 +676,9 @@ HTMLEOF
                     sh """
                         mkdir -p processed
                         docker run --rm \
-                          -v \$(pwd)/reports:/reports \
-                          -v \$(pwd)/processed:/output \
-                          -v \$(pwd):/app \
+                          -v \\$(pwd)/reports:/reports \
+                          -v \\$(pwd)/processed:/output \
+                          -v \\$(pwd):/app \
                           -w /app \
                           python:3.11-slim \
                           sh -c 'pip install requests && python normalize_vulnerabilities.py' || true
@@ -706,7 +706,7 @@ HTMLEOF
                             
                             # Show counts to ensure we are using REAL data
                             if [ -f processed/normalized_vulnerabilities.json ]; then
-                              COUNT=\$(python3 - <<'PY'
+                              COUNT=\\$(python3 - <<'PY'
 import json, sys
 try:
     with open('processed/normalized_vulnerabilities.json') as f:
@@ -715,16 +715,16 @@ except Exception:
     print(0)
 PY
 )
-echo "🔢 Normalized vulns count: \${COUNT}"
+echo "🔢 Normalized vulns count: \\${COUNT}"
                             else
                               echo "⚠️ No normalized vulnerabilities found; creating empty file"
                               echo '[]' > processed/normalized_vulnerabilities.json
                             fi
                             
                             # Run LLM integration against REAL normalized data
-                            if [ -n "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-token" ]; then
+                            if [ -n "\\${HF_TOKEN}" ] && [ "\\${HF_TOKEN}" != "dummy-token" ]; then
                                 echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
-                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app python:3.11-slim sh -c 'pip install requests && python generate_ai_policy.py' || true
+                                docker run --rm -e HF_TOKEN=\\$HF_TOKEN -v \\$(pwd)/processed:/app/processed -v \\$(pwd)/ai-policies:/app/ai-policies -v \\$(pwd):/app -w /app python:3.11-slim sh -c 'pip install requests && python generate_ai_policy.py' || true
                                 
                                 # Create empty AI policy if script fails
                                 mkdir -p ai-policies
@@ -790,19 +790,19 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                         echo ""
                         
                         # Count reports and vulnerabilities
-                        TOTAL_REPORTS=\$(find reports/ -name "*.json" | wc -l)
-                        TOTAL_HTML=\$(find reports/ -name "*.html" | wc -l)
+                        TOTAL_REPORTS=\\$(find reports/ -name "*.json" | wc -l)
+                        TOTAL_HTML=\\$(find reports/ -name "*.html" | wc -l)
                         
                         echo "📊 Security Scanning Results:"
-                        echo "   🔍 Total JSON reports generated: \$TOTAL_REPORTS"
-                        echo "   🌐 Total HTML reports generated: \$TOTAL_HTML"
+                        echo "   🔍 Total JSON reports generated: \\$TOTAL_REPORTS"
+                        echo "   🌐 Total HTML reports generated: \\$TOTAL_HTML"
                         echo ""
                         
                         echo "🕵️ Secrets Scanning (Gitleaks):"
                         if [ -f reports/gitleaks-report.json ]; then
-                            SECRETS_COUNT=\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+                            SECRETS_COUNT=\\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
                             echo "   📄 Report: ✅ Generated"
-                            echo "   🚨 Secrets detected: \$SECRETS_COUNT"
+                            echo "   🚨 Secrets detected: \\$SECRETS_COUNT"
                         else
                             echo "   📄 Report: ❌ Missing"
                         fi
@@ -810,9 +810,9 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                         
                         echo "🔍 Static Code Analysis (Semgrep):"
                         if [ -f reports/semgrep-report.json ]; then
-                            SAST_ISSUES=\$(cat reports/semgrep-report.json | python3 -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('results', [])))" 2>/dev/null || echo "0")
+                            SAST_ISSUES=\\$(cat reports/semgrep-report.json | python3 -c "import sys, json; data=json.load(sys.stdin); print(len(data.get('results', [])))" 2>/dev/null || echo "0")
                             echo "   📄 Report: ✅ Generated"
-                            echo "   🚨 Code issues found: \$SAST_ISSUES"
+                            echo "   🚨 Code issues found: \\$SAST_ISSUES"
                         else
                             echo "   📄 Report: ❌ Missing"
                         fi
@@ -820,9 +820,9 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                         
                         echo "📦 Dependency Analysis (OWASP):"
                         if [ -f reports/dependency-check-report.json ]; then
-                            DEPS_VULNS=\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l 2>/dev/null || echo "0")
+                            DEPS_VULNS=\\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l 2>/dev/null || echo "0")
                             echo "   📄 Report: ✅ Generated"
-                            echo "   🚨 Dependency vulnerabilities: \$DEPS_VULNS"
+                            echo "   🚨 Dependency vulnerabilities: \\$DEPS_VULNS"
                         else
                             echo "   📄 Report: ❌ Missing"
                         fi
@@ -830,9 +830,9 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                         
                         echo "🔒 Container Security (Trivy):"
                         if [ -f reports/trivy-report.json ]; then
-                            CONTAINER_VULNS=\$(grep -o '"Severity"' reports/trivy-report.json | wc -l 2>/dev/null || echo "631")
+                            CONTAINER_VULNS=\\$(grep -o '"Severity"' reports/trivy-report.json | wc -l 2>/dev/null || echo "631")
                             echo "   📄 Report: ✅ Generated"
-                            echo "   🚨 Container vulnerabilities: \$CONTAINER_VULNS"
+                            echo "   🚨 Container vulnerabilities: \\$CONTAINER_VULNS"
                         else
                             echo "   📄 Report: ❌ Missing"
                         fi
@@ -840,9 +840,9 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                         
                         echo "🕷️ Web Application Security (ZAP):"
                         if [ -f reports/zap-report.json ]; then
-                            ZAP_ALERTS=\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l 2>/dev/null || echo "3")
+                            ZAP_ALERTS=\\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l 2>/dev/null || echo "3")
                             echo "   📄 Report: ✅ Generated"
-                            echo "   🚨 Security alerts: \$ZAP_ALERTS"
+                            echo "   🚨 Security alerts: \\$ZAP_ALERTS"
                         else
                             echo "   📄 Report: ❌ Missing"
                         fi
@@ -885,20 +885,20 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     echo '📢 Sending deployment annotation with security metrics to Grafana...'
                     withCredentials([string(credentialsId: GRAFANA_API_KEY_CREDENTIALS_ID, variable: 'GRAFANA_API_KEY')]) {
                         sh """
-                            TIME_MS=\$(date +%s%3N)
+                            TIME_MS=\\$(date +%s%3N)
                             
                             # Count vulnerabilities from reports
-                            HIGH_VULNS=\$(find reports -name "*.json" -exec grep -l "HIGH\\|CRITICAL" {} \\; | wc -l || echo "0")
+                            HIGH_VULNS=\\$(find reports -name "*.json" -exec grep -l "HIGH\\|CRITICAL" {} \\; | wc -l || echo "0")
                             
-                            MESSAGE="🚀 DevSecOps Deployment Complete! Tag: ${IMAGE_TAG} | Build: \${BUILD_NUMBER} | Security Scans: ✅ | High/Critical Vulns: \${HIGH_VULNS}"
+                            MESSAGE="🚀 DevSecOps Deployment Complete! Tag: ${IMAGE_TAG} | Build: \\${BUILD_NUMBER} | Security Scans: ✅ | High/Critical Vulns: \\${HIGH_VULNS}"
                             
-                            curl -X POST -H "Authorization: Bearer \${GRAFANA_API_KEY}" \\
+                            curl -X POST -H "Authorization: Bearer \\${GRAFANA_API_KEY}" \\
                                  -H "Content-Type: application/json" \\
                                  -d '{
-                                     "dashboardId": \${GRAFANA_DASHBOARD_ID},
-                                     "time": \${TIME_MS},
+                                     "dashboardId": \\${GRAFANA_DASHBOARD_ID},
+                                     "time": \\${TIME_MS},
                                      "tags": ["devsecops", "ai-policy", "security", "${IMAGE_TAG}"],
-                                     "text": "\${MESSAGE}"
+                                     "text": "\\${MESSAGE}"
                                  }' \\
                                  "${GRAFANA_URL}/api/annotations" || echo "Failed to send Grafana annotation"
                         """
@@ -925,19 +925,19 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     echo "🚀 Build Information:"
                     echo "   📦 Image: ${IMAGE_NAME}:${IMAGE_TAG}"
                     echo "   🏷️ Build Number: ${BUILD_NUMBER}"
-                    echo "   📅 Build Date: \$(date)"
-                    echo "   ⏱️ Total Build Time: \$((\$SECONDS / 60)) minutes \$((\$SECONDS % 60)) seconds"
+                    echo "   📅 Build Date: \\$(date)"
+                    echo "   ⏱️ Total Build Time: \\$((\\$SECONDS / 60)) minutes \\$((\\$SECONDS % 60)) seconds"
                     echo ""
                     
                     # Count all generated artifacts
-                    TOTAL_REPORTS=\$(find reports/ -name "*.json" -o -name "*.html" | wc -l 2>/dev/null || echo "0")
-                    AI_POLICIES=\$(find ai-policies/ -name "*.json" 2>/dev/null | wc -l || echo "0")
-                    PROCESSED_FILES=\$(find processed/ -name "*.json" 2>/dev/null | wc -l || echo "0")
+                    TOTAL_REPORTS=\\$(find reports/ -name "*.json" -o -name "*.html" | wc -l 2>/dev/null || echo "0")
+                    AI_POLICIES=\\$(find ai-policies/ -name "*.json" 2>/dev/null | wc -l || echo "0")
+                    PROCESSED_FILES=\\$(find processed/ -name "*.json" 2>/dev/null | wc -l || echo "0")
                     
                     echo "📋 Security Scanning Results:"
-                    echo "   🔍 Security reports generated: \$TOTAL_REPORTS"
-                    echo "   🤖 AI policies created: \$AI_POLICIES"
-                    echo "   🔄 Processed artifacts: \$PROCESSED_FILES"
+                    echo "   🔍 Security reports generated: \\$TOTAL_REPORTS"
+                    echo "   🤖 AI policies created: \\$AI_POLICIES"
+                    echo "   🔄 Processed artifacts: \\$PROCESSED_FILES"
                     echo ""
                     
                     echo "🛡️ Security Tools Executed Successfully:"
@@ -952,20 +952,20 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     
                     echo "🎯 Key Security Metrics:"
                     if [ -f reports/gitleaks-report.json ]; then
-                        SECRETS=\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "2")
-                        echo "   🕵️ Secrets detected: \$SECRETS"
+                        SECRETS=\\$(cat reports/gitleaks-report.json | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "2")
+                        echo "   🕵️ Secrets detected: \\$SECRETS"
                     fi
                     if [ -f reports/dependency-check-report.json ]; then
-                        DEPS_VULNS=\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l 2>/dev/null || echo "2")
-                        echo "   📦 Dependency vulnerabilities: \$DEPS_VULNS"
+                        DEPS_VULNS=\\$(cat reports/dependency-check-report.json | grep -o '"name":"CVE-' | wc -l 2>/dev/null || echo "2")
+                        echo "   📦 Dependency vulnerabilities: \\$DEPS_VULNS"
                     fi
                     if [ -f reports/trivy-report.json ]; then
-                        CONTAINER_VULNS=\$(grep -o '"Severity"' reports/trivy-report.json | wc -l 2>/dev/null || echo "631")
-                        echo "   🔒 Container vulnerabilities: \$CONTAINER_VULNS"
+                        CONTAINER_VULNS=\\$(grep -o '"Severity"' reports/trivy-report.json | wc -l 2>/dev/null || echo "631")
+                        echo "   🔒 Container vulnerabilities: \\$CONTAINER_VULNS"
                     fi
                     if [ -f reports/zap-report.json ]; then
-                        ZAP_ALERTS=\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l 2>/dev/null || echo "3")
-                        echo "   🕷️ Web security alerts: \$ZAP_ALERTS"
+                        ZAP_ALERTS=\\$(cat reports/zap-report.json | grep -o '"alert"' | wc -l 2>/dev/null || echo "3")
+                        echo "   🕷️ Web security alerts: \\$ZAP_ALERTS"
                     fi
                     echo ""
                     
@@ -1000,7 +1000,7 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     echo "🔍 Troubleshooting Information:"
                     echo "   📋 Build Number: ${BUILD_NUMBER}"
                     echo "   🏷️ Image Tag: ${IMAGE_TAG}"
-                    echo "   📅 Failure Date: \$(date)"
+                    echo "   📅 Failure Date: \\$(date)"
                     echo ""
                     echo "🚨 Check the following logs for details:"
                     echo "   - Security scan logs"
@@ -1031,8 +1031,8 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     # Clean up old images (keep last 5 builds)
                     echo "🗑️ Cleaning up old Docker images..."
                     docker images ${IMAGE_NAME} --format "{{.Tag}}" | tail -n +6 | while read tag; do
-                        if [ "\$tag" != "latest" ] && [ "\$tag" != "${IMAGE_TAG}" ]; then
-                            docker rmi ${IMAGE_NAME}:\$tag 2>/dev/null || true
+                        if [ "\\$tag" != "latest" ] && [ "\\$tag" != "${IMAGE_TAG}" ]; then
+                            docker rmi ${IMAGE_NAME}:\\$tag 2>/dev/null || true
                         fi
                     done
                     
@@ -1048,9 +1048,9 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                     echo ""
                     echo "✅ Cleanup completed successfully!"
                     echo "📊 Current workspace status:"
-                    echo "   📁 Reports: \$(find reports/ -type f | wc -l) files"
-                    echo "   🤖 AI Policies: \$(find ai-policies/ -type f 2>/dev/null | wc -l || echo 0) files"
-                    echo "   🔄 Processed: \$(find processed/ -type f 2>/dev/null | wc -l || echo 0) files"
+                    echo "   📁 Reports: \\$(find reports/ -type f | wc -l) files"
+                    echo "   🤖 AI Policies: \\$(find ai-policies/ -type f 2>/dev/null | wc -l || echo 0) files"
+                    echo "   🔄 Processed: \\$(find processed/ -type f 2>/dev/null | wc -l || echo 0) files"
                 """
             }
         }
