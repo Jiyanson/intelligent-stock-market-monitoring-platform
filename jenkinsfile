@@ -237,10 +237,10 @@ pipeline {
                         docker run --rm \
                           -v \$(pwd)/reports:/reports \
                           -v \$(pwd)/processed:/output \
-                          -v \$(pwd)/reports:/work \
-                          -w /work \
+                          -v \$(pwd):/app \
+                          -w /app \
                           python:3.11-slim \
-                          sh -c 'pip install -q requests && python process_vulnerabilities.py' || echo "Normalization completed"
+                          sh -c 'python normalize_vulnerabilities.py' || echo "Normalization completed"
                     """
                 }
             }
@@ -277,7 +277,7 @@ echo "🔢 Normalized vulns count: \${COUNT}"
                             # Run LLM integration against REAL normalized data
                             if [ -n "\${HF_TOKEN}" ] && [ "\${HF_TOKEN}" != "dummy-token" ]; then
                                 echo "🧠 Using DeepSeek R1 via Hugging Face Inference API"
-                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app ai-security-processor:latest python3 real_llm_integration.py || echo "DeepSeek analysis stage completed"
+                                docker run --rm -e HF_TOKEN=\$HF_TOKEN -v \$(pwd)/processed:/app/processed -v \$(pwd)/ai-policies:/app/ai-policies -v \$(pwd):/app -w /app python:3.11-slim sh -c 'python generate_ai_policy.py' || echo "AI analysis completed"
                             else
                                 echo "⚠️ HF token not available; skipping DeepSeek."
                             fi

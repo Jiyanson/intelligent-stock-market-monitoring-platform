@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-28T08:11:45.311333",
+  "build_number": "30",
+  "source": "REAL security scan results from Jenkins DevSecOps pipeline",
+  "scan_summary": {
+    "total_vulnerabilities": 0,
+    "severity_breakdown": {
+      "CRITICAL": 0,
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 0
+    },
+    "code_analysis": {
+      "semgrep_findings": 0,
+      "files_scanned": 0,
+      "status": "CLEAN"
+    }
+  },
+  "nist_csf_recommendations": [],
+  "iso27001_controls": [
+    {
+      "control": "A.12.6.1",
+      "title": "Management of technical vulnerabilities",
+      "status": "IMPLEMENTED",
+      "evidence": "Automated vulnerability scanning: 0 vulnerabilities identified"
+    },
+    {
+      "control": "A.14.2.5",
+      "title": "Secure system engineering principles",
+      "status": "COMPLIANT",
+      "evidence": "Static analysis clean: 0 security issues in 0 files"
+    }
+  ],
+  "remediation_priorities": [
+    {
+      "priority": 2,
+      "issue": "Container image optimization",
+      "recommendation": "Migrate to minimal base image (alpine/distroless)",
+      "effort": "MEDIUM",
+      "impact": "HIGH"
+    }
+  ]
+}

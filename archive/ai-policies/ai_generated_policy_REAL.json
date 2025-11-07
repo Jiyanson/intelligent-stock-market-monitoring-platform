@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-10-27T00:24:37.781377",
+  "source": "REAL security scan results from stock-market-platform repository",
+  "scan_summary": {
+    "total_vulnerabilities": 631,
+    "severity_breakdown": {
+      "CRITICAL": 0,
+      "HIGH": 55,
+      "MEDIUM": 152,
+      "LOW": 424
+    },
+    "code_analysis": {
+      "semgrep_findings": 0,
+      "files_scanned": 31,
+      "status": "CLEAN"
+    }
+  },
+  "nist_csf_recommendations": [
+    {
+      "function": "DETECT",
+      "category": "DE.CM",
+      "subcategory": "DE.CM-8",
+      "description": "Vulnerability scans are performed",
+      "reason": "55 high severity vulnerabilities detected",
+      "priority": "HIGH",
+      "implementation": "Implement automated vulnerability scanning in CI/CD"
+    }
+  ],
+  "iso27001_controls": [
+    {
+      "control": "A.12.6.1",
+      "title": "Management of technical vulnerabilities",
+      "description": "Vulnerability scanning implemented and findings documented",
+      "current_status": "IMPLEMENTED",
+      "evidence": "Trivy scan completed, 631 vulnerabilities identified"
+    },
+    {
+      "control": "A.14.2.5",
+      "title": "Secure system engineering principles",
+      "description": "Static code analysis shows secure coding practices",
+      "current_status": "COMPLIANT",
+      "evidence": "Semgrep analysis: 0 security issues found in 31 files"
+    }
+  ],
+  "remediation_priorities": [
+    {
+      "priority": 1,
+      "issue": "55 critical/high severity vulnerabilities",
+      "affected_packages": [
+        "linux-libc-dev"
+      ],
+      "recommendation": "Update affected packages or base image",
+      "effort": "LOW",
+      "impact": "HIGH"
+    },
+    {
+      "priority": 2,
+      "issue": "424 low severity vulnerabilities in base OS",
+      "recommendation": "Consider migration to minimal base image (alpine, distroless)",
+      "effort": "MEDIUM",
+      "impact": "HIGH",
+      "rationale": "Reduces attack surface and maintenance overhead"
+    }
+  ]
+}
