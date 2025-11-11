@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_USERNAME = 'saadait02'
+        DOCKER_USERNAME = 'michoc'
         IMAGE_NAME = "${DOCKER_USERNAME}/stock-market-platform"
         IMAGE_TAG = "${BUILD_NUMBER}"
         REPORTS_DIR = 'reports'

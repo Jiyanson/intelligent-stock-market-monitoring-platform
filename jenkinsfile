@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Docker Hub credentials
         DOCKER_REGISTRY = 'docker.io'
-        DOCKER_USERNAME = 'saadait02'
+        DOCKER_USERNAME = 'michoc'
         IMAGE_NAME = "${DOCKER_USERNAME}/stock-market-platform"
         DOCKER_CREDENTIALS_ID = '2709ba15-3bf5-42b4-a41e-e2ae435f4951'
         
