@@ -74,9 +74,21 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "🐳 Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
+                    echo "🐳 Building Docker image with layer caching: ${IMAGE_NAME}:${IMAGE_TAG}"
                     sh """
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        # Enable Docker BuildKit for better caching
+                        export DOCKER_BUILDKIT=1
+
+                        # Pull the latest image to use as cache (ignore if doesn't exist)
+                        docker pull ${IMAGE_NAME}:latest || echo "No cached image found, building from scratch"
+
+                        # Build with cache-from to reuse layers from previous builds
+                        docker build \\
+                            --cache-from ${IMAGE_NAME}:latest \\
+                            --build-arg BUILDKIT_INLINE_CACHE=1 \\
+                            -t ${IMAGE_NAME}:${IMAGE_TAG} .
+
+                        # Tag as latest for next build's cache
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
                     """
                 }
@@ -86,10 +98,19 @@ pipeline {
         stage('Build AI Processor Image') {
             steps {
                 script {
-                    echo "🤖 Building AI processor image (cached for faster AI stages)..."
+                    echo "🤖 Building AI processor image with layer caching..."
                     sh """
-                        # Build AI processor image with pre-installed ML packages
-                        docker build -f Dockerfile.ai-processor -t ai-security-processor:latest . || echo "AI processor build completed"
+                        # Enable Docker BuildKit for better caching
+                        export DOCKER_BUILDKIT=1
+
+                        # Try to pull existing AI processor image for cache
+                        docker pull ai-security-processor:latest || echo "No cached AI processor image found"
+
+                        # Build AI processor image with cache-from
+                        docker build -f Dockerfile.ai-processor \\
+                            --cache-from ai-security-processor:latest \\
+                            --build-arg BUILDKIT_INLINE_CACHE=1 \\
+                            -t ai-security-processor:latest . || echo "AI processor build completed"
                     """
                 }
             }
