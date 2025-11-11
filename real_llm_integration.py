@@ -50,7 +50,7 @@ class LLMSecurityPolicyGenerator:
         }
         
         # DeepSeek R1 via HuggingFace
-        api_url = "https://api-inference.huggingface.co/models/deepseek-ai/deepseek-r1-distill-llama-70b"
+        api_url = "https://router.huggingface.co/hf-inference/models/deepseek-ai/deepseek-r1-distill-llama-70b"
         
         payload = {
             "inputs": prompt,
@@ -107,7 +107,7 @@ class LLMSecurityPolicyGenerator:
         headers = {"Authorization": f"Bearer {self.hf_token}"}
         
         # Backup: CodeLlama for code security analysis
-        api_url = "https://api-inference.huggingface.co/models/codellama/CodeLlama-7b-Instruct-hf"
+        api_url = "https://router.huggingface.co/hf-inference/models/codellama/CodeLlama-7b-Instruct-hf"
         
         payload = {
             "inputs": prompt,
@@ -423,7 +423,7 @@ class LLMSecurityPolicyGenerator:
         }
 
         # LLaMA 3.3 70B Instruct via HuggingFace
-        api_url = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.3-70B-Instruct"
+        api_url = "https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.3-70B-Instruct"
 
         payload = {
             "inputs": prompt,
