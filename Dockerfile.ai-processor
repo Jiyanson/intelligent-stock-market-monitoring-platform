@@ -29,8 +29,9 @@ RUN pip install --no-cache-dir \
 # Create directories for processing
 RUN mkdir -p /reports /output /app/scripts
 
-# Copy the vulnerability processing script
+# Copy the vulnerability processing scripts
 COPY reports/process_vulnerabilities.py /app/scripts/
+COPY real_llm_integration.py /app/
 
 # Set permissions
 RUN chmod +x /app/scripts/process_vulnerabilities.py

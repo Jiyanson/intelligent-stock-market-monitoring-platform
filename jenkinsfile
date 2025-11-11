@@ -169,19 +169,29 @@ pipeline {
                 stage('SAST - SonarQube') {
                     steps {
                         script {
-                            echo '🔍 Running SAST with SonarQube...'
-                            withCredentials([string(credentialsId: SONARQUBE_TOKEN_ID, variable: 'SONAR_TOKEN')]) {
-                                sh """
-                                    mkdir -p reports
-                                    docker run --rm \\
-                                        -e SONAR_HOST_URL="${SONARQUBE_URL}" \\
-                                        -e SONAR_LOGIN="\${SONAR_TOKEN}" \\
-                                        -v \$(pwd):/usr/src \\
-                                        sonarsource/sonar-scanner-cli:latest \\
-                                        -Dsonar.projectKey=stock-market-platform \\
-                                        -Dsonar.sources=app/ \\
-                                        -Dsonar.language=python || echo "SonarQube scan completed"
-                                """
+                            echo '🔍 Checking SonarQube availability...'
+                            def sonarqubeAvailable = sh(
+                                script: "curl -s -f ${SONARQUBE_URL}/api/system/status || echo 'unavailable'",
+                                returnStdout: true
+                            ).trim()
+
+                            if (sonarqubeAvailable != 'unavailable') {
+                                echo '🔍 Running SAST with SonarQube...'
+                                withCredentials([string(credentialsId: SONARQUBE_TOKEN_ID, variable: 'SONAR_TOKEN')]) {
+                                    sh """
+                                        mkdir -p reports
+                                        docker run --rm \\
+                                            -e SONAR_HOST_URL="${SONARQUBE_URL}" \\
+                                            -e SONAR_LOGIN="\${SONAR_TOKEN}" \\
+                                            -v \$(pwd):/usr/src \\
+                                            sonarsource/sonar-scanner-cli:latest \\
+                                            -Dsonar.projectKey=stock-market-platform \\
+                                            -Dsonar.sources=app/ \\
+                                            -Dsonar.language=python || echo "SonarQube scan completed"
+                                    """
+                                }
+                            } else {
+                                echo '⚠️ SonarQube server not available at ${SONARQUBE_URL}, skipping scan'
                             }
                         }
                     }
@@ -238,7 +248,7 @@ pipeline {
                         docker run --rm \\
                             --network=host \\
                             -v \$(pwd)/reports:/zap/wrk/:rw \\
-                            owasp/zap2docker-stable:latest \\
+                            zaproxy/zap-stable:latest \\
                             zap-baseline.py \\
                             -t \${TARGET_URL} \\
                             -J zap-report.json \\
