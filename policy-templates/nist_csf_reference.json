@@ -1,0 +1,192 @@
+{
+  "policy_name": "NIST Cybersecurity Framework - Vulnerability Management Policy",
+  "version": "2.0",
+  "framework": "NIST CSF 2.0",
+  "last_updated": "2025-01-15",
+  "description": "Reference security policy aligned with NIST Cybersecurity Framework for vulnerability management",
+
+  "nist_csf_recommendations": [
+    {
+      "function": "IDENTIFY",
+      "category": "ID.AM-2",
+      "subcategory": "Software platforms and applications",
+      "description": "Maintain an inventory of software platforms and applications, including versions and patch status",
+      "implementation": "Deploy automated asset discovery tools to continuously track software inventory. Document all applications, libraries, and frameworks in use. Integrate with CMDB for centralized visibility.",
+      "priority": "HIGH",
+      "owner": "IT Security Team",
+      "evidence": "Maintain software inventory database with automated updates"
+    },
+    {
+      "function": "IDENTIFY",
+      "category": "ID.RA-1",
+      "subcategory": "Asset vulnerabilities are identified and documented",
+      "description": "Conduct regular vulnerability assessments to identify and document asset weaknesses",
+      "implementation": "Perform weekly automated vulnerability scans using SAST, SCA, DAST, and container security tools. Document findings in vulnerability management system with severity ratings and affected assets.",
+      "priority": "CRITICAL",
+      "owner": "Security Operations Team",
+      "evidence": "Weekly vulnerability scan reports with documented findings"
+    },
+    {
+      "function": "IDENTIFY",
+      "category": "ID.RA-5",
+      "subcategory": "Threats, vulnerabilities, likelihoods, and impacts",
+      "description": "Analyze threats and vulnerabilities to determine likelihood and business impact",
+      "implementation": "Utilize threat intelligence feeds and vulnerability databases (NVD, CVE) to assess risk. Calculate risk scores using CVSS v3.1 metrics combined with asset criticality and threat actor capability.",
+      "priority": "HIGH",
+      "owner": "Risk Management Team",
+      "evidence": "Risk assessment reports with CVSS scores and business impact analysis"
+    },
+    {
+      "function": "PROTECT",
+      "category": "PR.IP-12",
+      "subcategory": "Vulnerability management plan",
+      "description": "Develop and implement a comprehensive vulnerability management plan",
+      "implementation": "Establish formal vulnerability management lifecycle including identification, classification, prioritization, remediation, and verification. Define SLAs for remediation based on severity: Critical (24h), High (7d), Medium (30d), Low (90d).",
+      "priority": "CRITICAL",
+      "owner": "CISO Office",
+      "evidence": "Documented vulnerability management plan with defined processes and SLAs"
+    },
+    {
+      "function": "PROTECT",
+      "category": "PR.AC-3",
+      "subcategory": "Remote access is managed",
+      "description": "Secure remote access mechanisms to prevent exploitation of vulnerabilities",
+      "implementation": "Implement multi-factor authentication for all remote access. Use VPN with strong encryption. Restrict remote access to necessary services only. Monitor and log all remote connections.",
+      "priority": "HIGH",
+      "owner": "Network Security Team",
+      "evidence": "MFA deployment status, VPN configuration, remote access logs"
+    },
+    {
+      "function": "PROTECT",
+      "category": "PR.DS-6",
+      "subcategory": "Integrity checking mechanisms",
+      "description": "Verify integrity of software and firmware to detect unauthorized changes",
+      "implementation": "Deploy file integrity monitoring (FIM) on critical systems. Use cryptographic hashes to verify software authenticity. Implement secure boot and code signing for applications.",
+      "priority": "MEDIUM",
+      "owner": "Systems Engineering Team",
+      "evidence": "FIM alerts, hash verification logs, code signing certificates"
+    },
+    {
+      "function": "DETECT",
+      "category": "DE.CM-8",
+      "subcategory": "Vulnerability scans are performed",
+      "description": "Conduct regular vulnerability scanning across all assets",
+      "implementation": "Execute automated vulnerability scans weekly using multiple scanning tools (SAST for code, SCA for dependencies, DAST for running applications, Trivy for containers). Integrate scans into CI/CD pipeline for continuous assessment.",
+      "priority": "CRITICAL",
+      "owner": "DevSecOps Team",
+      "evidence": "Automated scan schedules, scan coverage reports, CI/CD integration logs"
+    },
+    {
+      "function": "DETECT",
+      "category": "DE.CM-4",
+      "subcategory": "Malicious code is detected",
+      "description": "Deploy mechanisms to detect malicious code and unauthorized changes",
+      "implementation": "Use endpoint detection and response (EDR) tools with behavioral analysis. Scan all code commits for secrets and malicious patterns using Semgrep and Gitleaks. Monitor for indicators of compromise (IoCs).",
+      "priority": "HIGH",
+      "owner": "Security Operations Center",
+      "evidence": "EDR alerts, code scan results, IoC detection logs"
+    },
+    {
+      "function": "DETECT",
+      "category": "DE.DP-5",
+      "subcategory": "Detection processes are continuously improved",
+      "description": "Refine detection capabilities based on lessons learned and threat intelligence",
+      "implementation": "Conduct quarterly reviews of detection rules and signatures. Incorporate threat intelligence to update detection patterns. Tune false positive rates below 5%.",
+      "priority": "MEDIUM",
+      "owner": "Security Engineering Team",
+      "evidence": "Quarterly detection capability reviews, tuning metrics"
+    },
+    {
+      "function": "RESPOND",
+      "category": "RS.AN-5",
+      "subcategory": "Processes are established for vulnerability disclosure",
+      "description": "Create formal processes for receiving and responding to vulnerability disclosures",
+      "implementation": "Establish security@company.com contact. Publish vulnerability disclosure policy (VDP). Acknowledge reports within 48 hours. Provide updates every 7 days. Follow coordinated disclosure timeline (90 days standard).",
+      "priority": "HIGH",
+      "owner": "Product Security Team",
+      "evidence": "Published VDP, disclosure response metrics, researcher acknowledgments"
+    },
+    {
+      "function": "RESPOND",
+      "category": "RS.MI-3",
+      "subcategory": "Newly identified vulnerabilities are mitigated",
+      "description": "Implement timely remediation of newly discovered vulnerabilities",
+      "implementation": "Patch critical vulnerabilities within 24 hours, high within 7 days, medium within 30 days, low within 90 days. Apply compensating controls when patches unavailable. Verify remediation effectiveness through re-scanning.",
+      "priority": "CRITICAL",
+      "owner": "IT Operations Team",
+      "evidence": "Patching compliance reports, compensating control documentation, verification scans"
+    },
+    {
+      "function": "RECOVER",
+      "category": "RC.RP-1",
+      "subcategory": "Recovery plan is executed",
+      "description": "Execute recovery procedures following security incidents",
+      "implementation": "Maintain documented recovery runbooks for common vulnerability exploitation scenarios. Test recovery procedures quarterly. Restore from known-good backups. Rebuild compromised systems from hardened baseline images.",
+      "priority": "HIGH",
+      "owner": "Incident Response Team",
+      "evidence": "Recovery runbooks, quarterly test results, restoration time objectives"
+    }
+  ],
+
+  "iso27001_controls": [
+    {
+      "control": "A.5.1",
+      "title": "Policies for information security",
+      "ai_recommendation": "Establish comprehensive information security policies that include vulnerability management requirements, roles and responsibilities, and compliance obligations",
+      "implementation_status": "REQUIRED",
+      "priority": "CRITICAL",
+      "source": "ISO_27001_2022"
+    },
+    {
+      "control": "A.8.8",
+      "title": "Management of technical vulnerabilities",
+      "ai_recommendation": "Implement systematic processes to identify, evaluate, and remediate technical vulnerabilities in systems and software. Maintain vulnerability inventory and track remediation progress.",
+      "implementation_status": "REQUIRED",
+      "priority": "CRITICAL",
+      "source": "ISO_27001_2022"
+    }
+  ],
+
+  "remediation_priorities": [
+    {
+      "priority": 1,
+      "severity_level": "CRITICAL",
+      "action": "Remediate critical vulnerabilities immediately (within 24 hours)",
+      "timeline": "24 hours maximum from discovery",
+      "reasoning": "Critical vulnerabilities with active exploits pose immediate risk to confidentiality, integrity, and availability of systems",
+      "effort_estimate": "HIGH",
+      "impact": "CRITICAL",
+      "source": "NIST_CSF_BEST_PRACTICE"
+    },
+    {
+      "priority": 2,
+      "severity_level": "HIGH",
+      "action": "Address high-severity vulnerabilities within one week",
+      "timeline": "7 days maximum from discovery",
+      "reasoning": "High-severity vulnerabilities could be exploited to gain unauthorized access or cause significant business impact",
+      "effort_estimate": "MEDIUM",
+      "impact": "HIGH",
+      "source": "NIST_CSF_BEST_PRACTICE"
+    },
+    {
+      "priority": 3,
+      "severity_level": "MEDIUM",
+      "action": "Remediate medium-severity vulnerabilities within 30 days",
+      "timeline": "30 days maximum from discovery",
+      "reasoning": "Medium-severity vulnerabilities require remediation but may have compensating controls or lower exploitability",
+      "effort_estimate": "MEDIUM",
+      "impact": "MEDIUM",
+      "source": "NIST_CSF_BEST_PRACTICE"
+    },
+    {
+      "priority": 4,
+      "severity_level": "LOW",
+      "action": "Address low-severity vulnerabilities within 90 days",
+      "timeline": "90 days maximum from discovery",
+      "reasoning": "Low-severity vulnerabilities have minimal immediate impact but should be remediated as part of regular maintenance",
+      "effort_estimate": "LOW",
+      "impact": "LOW",
+      "source": "NIST_CSF_BEST_PRACTICE"
+    }
+  ]
+}

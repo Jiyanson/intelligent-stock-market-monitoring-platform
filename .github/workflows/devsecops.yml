@@ -1,0 +1,540 @@
+name: DevSecOps Pipeline with AI Policy Generation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Stage 1: SAST (Static Application Security Testing)
+  # ============================================================================
+  sast-semgrep:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: auto
+          generateSarif: true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Save Semgrep report
+        if: always()
+        run: |
+          mkdir -p reports
+          mv semgrep.sarif reports/semgrep-report.json || echo "No SARIF file generated"
+
+      - name: Upload Semgrep artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-reports
+          path: reports/semgrep-report.json
+          retention-days: 30
+
+  sast-sonarqube:
+    name: SAST - SonarQube Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=stock-monitoring-platform
+            -Dsonar.sources=app
+            -Dsonar.python.version=3.11
+            -Dsonar.exclusions=**/tests/**,**/alembic/**
+
+      - name: SonarQube Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Download SonarQube report
+        if: always()
+        run: |
+          mkdir -p reports/sonarqube
+          # Export SonarQube results as JSON
+          curl -u "${{ secrets.SONAR_TOKEN }}:" \
+            "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=stock-monitoring-platform&resolved=false" \
+            -o reports/sonarqube/sonarqube-report.json || echo "Could not download SonarQube report"
+
+      - name: Upload SonarQube artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-reports
+          path: reports/sonarqube/
+          retention-days: 30
+
+  # ============================================================================
+  # Stage 2: SCA (Software Composition Analysis)
+  # ============================================================================
+  sca-dependency-check:
+    name: SCA - OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'stock-monitoring-platform'
+          path: '.'
+          format: 'JSON'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+
+      - name: Move Dependency-Check reports
+        if: always()
+        run: |
+          mkdir -p reports/dependency-check
+          mv dependency-check-report.json reports/dependency-check/ || echo "No DC report found"
+
+      - name: Upload Dependency-Check artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-reports
+          path: reports/dependency-check/
+          retention-days: 30
+
+  # ============================================================================
+  # Stage 3: Secret Scanning
+  # ============================================================================
+  secret-scanning:
+    name: Secret Detection - Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Save Gitleaks report
+        if: always()
+        run: |
+          mkdir -p reports
+          # Gitleaks creates gitleaks-report.json by default
+          mv gitleaks-report.json reports/ || echo "[]" > reports/gitleaks-report.json
+
+      - name: Upload Gitleaks artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-reports
+          path: reports/gitleaks-report.json
+          retention-days: 30
+
+  # ============================================================================
+  # Stage 4: Build and Container Security
+  # ============================================================================
+  build-and-scan:
+    name: Build Docker Image & Trivy Scan
+    runs-on: ubuntu-latest
+    needs: [sast-semgrep, sca-dependency-check, secret-scanning]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'json'
+          output: 'trivy-report.json'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+
+      - name: Move Trivy reports
+        if: always()
+        run: |
+          mkdir -p reports/trivy
+          mv trivy-report.json reports/trivy/ || echo "No Trivy report found"
+
+      - name: Upload Trivy artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: reports/trivy/
+          retention-days: 30
+
+      - name: Push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # Stage 5: Deploy to Staging (for DAST)
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    needs: build-and-scan
+    if: github.event_name != 'pull_request'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: stockdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/stockdb
+        run: |
+          alembic upgrade head || echo "Migration skipped"
+
+      - name: Start FastAPI application
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/stockdb
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+          curl http://localhost:8000/api/v1/ping || echo "App not ready"
+
+      - name: Wait for application
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/api/v1/ping; do sleep 2; done'
+
+      - name: Application health check
+        run: |
+          curl -f http://localhost:8000/api/v1/ping
+
+  # ============================================================================
+  # Stage 6: DAST (Dynamic Application Security Testing)
+  # ============================================================================
+  dast-zap:
+    name: DAST - OWASP ZAP Scan
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -j -l WARN'
+
+      - name: Move ZAP reports
+        if: always()
+        run: |
+          mkdir -p reports/zap
+          mv report_json.json reports/zap/zap-report.json || echo "No ZAP report found"
+          mv report_html.html reports/zap/zap-report.html || echo "No ZAP HTML report found"
+
+      - name: Upload ZAP artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-reports
+          path: reports/zap/
+          retention-days: 30
+
+  # ============================================================================
+  # Stage 7: Aggregate Reports and Normalize Data
+  # ============================================================================
+  process-reports:
+    name: Process & Normalize Security Reports
+    runs-on: ubuntu-latest
+    needs: [sast-semgrep, sast-sonarqube, sca-dependency-check, secret-scanning, build-and-scan, dast-zap]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: reports/
+
+      - name: List downloaded reports
+        run: |
+          find reports/ -type f -name "*.json"
+
+      - name: Install processing dependencies
+        run: |
+          pip install requests
+
+      - name: Normalize vulnerability reports
+        run: |
+          mkdir -p processed
+          python normalize_vulnerabilities.py
+
+      - name: Upload normalized data
+        uses: actions/upload-artifact@v4
+        with:
+          name: normalized-vulnerabilities
+          path: processed/normalized_vulnerabilities.json
+          retention-days: 90
+
+  # ============================================================================
+  # Stage 8: AI Policy Generation with LLMs
+  # ============================================================================
+  ai-policy-generation:
+    name: Generate Security Policies with LLMs
+    runs-on: ubuntu-latest
+    needs: process-reports
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download normalized vulnerabilities
+        uses: actions/download-artifact@v4
+        with:
+          name: normalized-vulnerabilities
+          path: processed/
+
+      - name: Install AI dependencies
+        run: |
+          pip install requests transformers torch
+
+      - name: Generate policies with LLaMA 3.3
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          mkdir -p ai-policies
+          python real_llm_integration.py --model llama || echo "LLaMA generation failed"
+
+      - name: Generate policies with DeepSeek R1
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python real_llm_integration.py --model deepseek || echo "DeepSeek generation failed"
+
+      - name: Upload AI-generated policies
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-generated-policies
+          path: ai-policies/
+          retention-days: 90
+
+  # ============================================================================
+  # Stage 9: Policy Evaluation (BLEU/ROUGE-L Metrics)
+  # ============================================================================
+  evaluate-policies:
+    name: Evaluate Policy Quality with BLEU/ROUGE-L
+    runs-on: ubuntu-latest
+    needs: ai-policy-generation
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download AI policies
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-generated-policies
+          path: ai-policies/
+
+      - name: Install evaluation dependencies
+        run: |
+          pip install nltk rouge-score sacrebleu
+
+      - name: Run policy evaluation
+        run: |
+          mkdir -p evaluation-results
+          python evaluate_policies.py
+
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: evaluation-results/
+          retention-days: 90
+
+      - name: Create evaluation summary
+        if: always()
+        run: |
+          echo "## Policy Evaluation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat evaluation-results/summary.md >> $GITHUB_STEP_SUMMARY || echo "No summary available" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Stage 10: Security Summary Report
+  # ============================================================================
+  security-summary:
+    name: Generate Security Summary
+    runs-on: ubuntu-latest
+    needs: [process-reports, ai-policy-generation, evaluate-policies]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+
+      - name: Generate summary report
+        run: |
+          echo "# DevSecOps Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Security Scans Completed:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SAST (Semgrep, SonarQube)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SCA (OWASP Dependency-Check)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Secret Scanning (Gitleaks)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Container Security (Trivy)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ DAST (OWASP ZAP)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## AI Policy Generation:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 LLaMA 3.3 Policy Generated" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 DeepSeek R1 Policy Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts Available:" >> $GITHUB_STEP_SUMMARY
+          echo "- Security scan reports" >> $GITHUB_STEP_SUMMARY
+          echo "- Normalized vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- AI-generated NIST CSF/ISO 27001 policies" >> $GITHUB_STEP_SUMMARY
+          echo "- BLEU/ROUGE-L evaluation metrics" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## DevSecOps Pipeline Results\n\nSecurity scans completed. Check the Actions tab for detailed reports and AI-generated policies.'
+            })

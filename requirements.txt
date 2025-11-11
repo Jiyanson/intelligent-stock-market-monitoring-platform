@@ -55,3 +55,78 @@ asyncpg>=0.29.0
 # Removed yfinance and pandas dependencies
 # Added requests for Alpha Vantage API calls
 requests>=2.31.0
+
+# ============================================================================
+# AI/ML Dependencies for LLM Policy Generation
+# ============================================================================
+# Hugging Face Transformers for LLM integration
+transformers>=4.35.0
+torch>=2.1.0
+accelerate>=0.24.0
+sentencepiece>=0.1.99
+protobuf>=4.25.0
+
+# LLM API integrations
+openai>=1.0.0  # Optional: for OpenAI API
+anthropic>=0.7.0  # Optional: for Claude API
+
+# ============================================================================
+# Evaluation Metrics (BLEU, ROUGE-L)
+# ============================================================================
+nltk>=3.8.1
+rouge-score>=0.1.2
+sacrebleu>=2.3.1
+evaluate>=0.4.0
+
+# ============================================================================
+# Security Report Processing
+# ============================================================================
+# XML parsing for OWASP Dependency-Check reports
+lxml>=4.9.3
+xmltodict>=0.13.0
+
+# HTML parsing for OWASP ZAP reports
+beautifulsoup4>=4.12.2
+html5lib>=1.1
+
+# SARIF format support
+sarif-om>=1.0.4
+
+# ============================================================================
+# Data Processing & Analysis
+# ============================================================================
+pandas>=2.1.0  # For data analysis and metrics calculation
+numpy>=1.24.0
+matplotlib>=3.8.0  # For visualization
+seaborn>=0.12.0  # For advanced visualization
+
+# ============================================================================
+# DevSecOps Utilities
+# ============================================================================
+# YAML configuration parsing
+pyyaml>=6.0.1
+
+# JSON schema validation
+jsonschema>=4.19.0
+
+# Progress bars for long-running tasks
+tqdm>=4.66.0
+
+# Rich console output
+rich>=13.6.0
+
+# ============================================================================
+# Testing & Quality Assurance
+# ============================================================================
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.10.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.6.0
+
+# ============================================================================
+# Documentation Generation
+# ============================================================================
+jinja2>=3.1.2  # For policy template rendering

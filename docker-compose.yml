@@ -1,6 +1,10 @@
-# version: '3.9'  # Removed obsolete version attribute
+# Docker Compose for Stock Monitoring Platform with DevSecOps Support
+# Includes application services + optional security scanning tools
 
 services:
+  # ============================================================================
+  # Application Services
+  # ============================================================================
   web:
     build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -12,6 +16,13 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   celery:
     build: .
@@ -22,6 +33,8 @@ services:
     depends_on:
       - redis
       - web
+    networks:
+      - app-network
 
   db:
     image: postgres:15
@@ -34,26 +47,134 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fastapi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: redis_cache
     ports:
       - "6379:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com     # Change this to your email
-      PGADMIN_DEFAULT_PASSWORD: admin            # Change this to a secure password
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80"                                # Access pgAdmin on http://localhost:5050
+      - "5050:80"
     depends_on:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
+
+  # ============================================================================
+  # DevSecOps Tools (Optional - for local development)
+  # ============================================================================
+
+  # SonarQube for SAST
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_JDBC_URL=jdbc:postgresql://sonar-db:5432/sonarqube
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    depends_on:
+      - sonar-db
+    networks:
+      - devsecops-network
+    profiles:
+      - devsecops
+
+  sonar-db:
+    image: postgres:15
+    container_name: sonar-postgres
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_postgres_data:/var/lib/postgresql/data
+    networks:
+      - devsecops-network
+    profiles:
+      - devsecops
+
+  # OWASP ZAP for DAST
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: owasp-zap
+    ports:
+      - "8080:8080"
+    command: zap-webswing.sh
+    networks:
+      - devsecops-network
+    profiles:
+      - devsecops
+
+  # AI Policy Processing Container
+  ai-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai-processor
+    container_name: ai-policy-processor
+    volumes:
+      - ./reports:/reports
+      - ./processed:/output
+      - ./ai-policies:/policies
+    env_file: .env
+    environment:
+      - REPORTS_DIR=/reports
+      - OUTPUT_DIR=/output
+      - POLICIES_DIR=/policies
+    networks:
+      - app-network
+    profiles:
+      - ai-processing
+    command: |
+      sh -c "
+        echo 'Processing vulnerability reports...' &&
+        python normalize_vulnerabilities.py &&
+        echo 'Generating AI policies...' &&
+        python real_llm_integration.py --model deepseek &&
+        python real_llm_integration.py --model llama &&
+        echo 'Evaluating policies...' &&
+        python evaluate_policies.py --models llama deepseek
+      "
+
+networks:
+  app-network:
+    driver: bridge
+  devsecops-network:
+    driver: bridge
 
 volumes:
   pgdata:
   pgadmin_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonar_postgres_data:

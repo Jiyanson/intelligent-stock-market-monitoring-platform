@@ -1,0 +1,213 @@
+{
+  "policy_name": "ISO/IEC 27001:2022 - Vulnerability Management Policy",
+  "version": "1.0",
+  "framework": "ISO/IEC 27001:2022",
+  "last_updated": "2025-01-15",
+  "description": "Reference security policy aligned with ISO/IEC 27001:2022 Annex A controls for vulnerability management",
+
+  "iso27001_controls": [
+    {
+      "control": "A.5.1",
+      "domain": "Organizational controls",
+      "title": "Policies for information security",
+      "objective": "To provide management direction and support for information security",
+      "description": "Information security policies shall be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "implementation_guidance": "Develop and maintain comprehensive information security policies covering vulnerability management, incident response, access control, and compliance. Ensure policies are reviewed annually and updated as needed. Obtain executive approval and communicate to all stakeholders.",
+      "implementation_status": "REQUIRED",
+      "priority": "CRITICAL",
+      "verification": "Policy documents approved and published, annual review records, employee acknowledgment receipts"
+    },
+    {
+      "control": "A.5.8",
+      "domain": "Organizational controls",
+      "title": "Information security in project management",
+      "objective": "To integrate information security into project management",
+      "description": "Information security shall be integrated into project management.",
+      "implementation_guidance": "Include security requirements in all project phases. Conduct security reviews during design, development, and deployment. Ensure DevSecOps practices are followed with security gates in CI/CD pipeline.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "Project security review records, DevSecOps pipeline configuration, security gate reports"
+    },
+    {
+      "control": "A.8.2",
+      "domain": "Technology controls",
+      "title": "Privileged access rights",
+      "objective": "To limit the allocation and use of privileged access rights",
+      "description": "The allocation and use of privileged access rights shall be restricted and managed.",
+      "implementation_guidance": "Implement least privilege principle. Use just-in-time (JIT) access for administrative tasks. Log and monitor all privileged access. Conduct quarterly access reviews. Require MFA for all privileged accounts.",
+      "implementation_status": "REQUIRED",
+      "priority": "CRITICAL",
+      "verification": "Privileged access logs, quarterly access review reports, MFA enforcement status"
+    },
+    {
+      "control": "A.8.8",
+      "domain": "Technology controls",
+      "title": "Management of technical vulnerabilities",
+      "objective": "To prevent exploitation of technical vulnerabilities",
+      "description": "Information about technical vulnerabilities of information systems in use shall be obtained, the organization's exposure to such vulnerabilities shall be evaluated and appropriate measures shall be taken.",
+      "implementation_guidance": "Establish vulnerability management program with defined processes for identification, assessment, prioritization, remediation, and verification. Use automated scanning tools (SAST, SCA, DAST, container scanning). Maintain vulnerability database with CVSS scoring. Define remediation SLAs based on severity.",
+      "implementation_status": "REQUIRED",
+      "priority": "CRITICAL",
+      "verification": "Vulnerability scan reports, remediation tracking metrics, SLA compliance reports"
+    },
+    {
+      "control": "A.8.9",
+      "domain": "Technology controls",
+      "title": "Configuration management",
+      "objective": "To ensure security of configuration information",
+      "description": "Configurations, including security configurations, of hardware, software, services and networks shall be established, documented, implemented, monitored and reviewed.",
+      "implementation_guidance": "Implement configuration management database (CMDB). Use infrastructure as code (IaC) with version control. Establish security baselines for all systems. Conduct configuration audits quarterly. Automate configuration compliance checking.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "CMDB records, IaC repository, baseline documents, compliance scan reports"
+    },
+    {
+      "control": "A.8.16",
+      "domain": "Technology controls",
+      "title": "Monitoring activities",
+      "objective": "To detect anomalous behavior and cybersecurity events",
+      "description": "Networks, systems and applications shall be monitored for anomalous behavior and appropriate actions taken to evaluate potential information security incidents.",
+      "implementation_guidance": "Deploy SIEM for centralized log collection and analysis. Implement continuous monitoring for security events. Set up alerts for suspicious activities. Maintain 90-day log retention minimum. Conduct weekly log reviews.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "SIEM configuration, monitoring dashboards, alert logs, weekly review reports"
+    },
+    {
+      "control": "A.8.19",
+      "domain": "Technology controls",
+      "title": "Installation of software on operational systems",
+      "objective": "To control software installation and minimize security risks",
+      "description": "Procedures and measures shall be implemented to securely manage software installation on operational systems.",
+      "implementation_guidance": "Require approval for all software installations. Maintain approved software whitelist. Scan all software for vulnerabilities before deployment. Use application control to prevent unauthorized software. Conduct monthly software inventory audits.",
+      "implementation_status": "REQUIRED",
+      "priority": "MEDIUM",
+      "verification": "Software approval records, whitelist documentation, installation logs, inventory reports"
+    },
+    {
+      "control": "A.8.23",
+      "domain": "Technology controls",
+      "title": "Web filtering",
+      "objective": "To manage access to external websites",
+      "description": "Access to external websites shall be managed to reduce exposure to malicious content.",
+      "implementation_guidance": "Deploy web filtering solution with categorization. Block access to malicious and high-risk categories. Monitor and log web access. Update block lists weekly based on threat intelligence. Allow exceptions through formal approval process.",
+      "implementation_status": "RECOMMENDED",
+      "priority": "MEDIUM",
+      "verification": "Web filter configuration, blocked category lists, access logs, exception approvals"
+    },
+    {
+      "control": "A.8.24",
+      "domain": "Technology controls",
+      "title": "Use of cryptography",
+      "objective": "To ensure proper and effective use of cryptography",
+      "description": "Rules for the effective use of cryptography, including cryptographic key management, shall be defined and implemented.",
+      "implementation_guidance": "Implement TLS 1.3 for all data in transit. Use AES-256 for data at rest. Establish key management procedures with HSM for sensitive keys. Rotate encryption keys annually. Use only approved cryptographic algorithms.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "Encryption standards documentation, key management procedures, TLS configuration, rotation logs"
+    },
+    {
+      "control": "A.8.28",
+      "domain": "Technology controls",
+      "title": "Secure coding",
+      "objective": "To ensure security of application development",
+      "description": "Secure coding principles shall be applied to software development.",
+      "implementation_guidance": "Adopt OWASP Top 10 secure coding practices. Conduct code reviews with security focus. Use SAST tools in IDE and CI/CD. Provide secure coding training to developers annually. Enforce code signing for all production deployments.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "Secure coding standards, code review records, SAST reports, training completion records"
+    },
+    {
+      "control": "A.8.32",
+      "domain": "Technology controls",
+      "title": "Change management",
+      "objective": "To ensure security during changes to systems",
+      "description": "Changes to information processing facilities and information systems shall be subject to change management procedures.",
+      "implementation_guidance": "Require security review for all changes. Implement change advisory board (CAB) with security representation. Test all changes in non-production environment first. Maintain rollback procedures. Document all changes in change management system.",
+      "implementation_status": "REQUIRED",
+      "priority": "HIGH",
+      "verification": "Change records, CAB meeting minutes, test results, rollback documentation"
+    }
+  ],
+
+  "nist_csf_recommendations": [
+    {
+      "function": "IDENTIFY",
+      "category": "ID.RA-1",
+      "description": "Asset vulnerabilities are identified and documented",
+      "implementation": "Conduct regular vulnerability assessments aligned with ISO 27001 A.8.8 requirements",
+      "source": "NIST_CSF_ISO_MAPPING"
+    },
+    {
+      "function": "PROTECT",
+      "category": "PR.IP-12",
+      "description": "A vulnerability management plan is developed and implemented",
+      "implementation": "Establish formal vulnerability management program per ISO 27001 A.8.8",
+      "source": "NIST_CSF_ISO_MAPPING"
+    },
+    {
+      "function": "DETECT",
+      "category": "DE.CM-8",
+      "description": "Vulnerability scans are performed",
+      "implementation": "Execute continuous vulnerability scanning with monitoring per ISO 27001 A.8.16",
+      "source": "NIST_CSF_ISO_MAPPING"
+    }
+  ],
+
+  "remediation_priorities": [
+    {
+      "priority": 1,
+      "severity_level": "CRITICAL",
+      "action": "Immediate remediation of critical vulnerabilities",
+      "timeline": "Within 24 hours of discovery",
+      "reasoning": "Critical vulnerabilities with CVSS >= 9.0 must be addressed immediately to prevent exploitation",
+      "applicable_controls": ["A.8.8", "A.8.32"],
+      "effort_estimate": "HIGH",
+      "impact": "CRITICAL"
+    },
+    {
+      "priority": 2,
+      "severity_level": "HIGH",
+      "action": "High-priority vulnerability remediation",
+      "timeline": "Within 7 days of discovery",
+      "reasoning": "High-severity vulnerabilities (CVSS 7.0-8.9) require prompt attention to mitigate risk",
+      "applicable_controls": ["A.8.8", "A.8.32"],
+      "effort_estimate": "MEDIUM",
+      "impact": "HIGH"
+    },
+    {
+      "priority": 3,
+      "severity_level": "MEDIUM",
+      "action": "Medium-severity vulnerability remediation",
+      "timeline": "Within 30 days of discovery",
+      "reasoning": "Medium vulnerabilities (CVSS 4.0-6.9) should be remediated within standard change windows",
+      "applicable_controls": ["A.8.8", "A.8.32"],
+      "effort_estimate": "MEDIUM",
+      "impact": "MEDIUM"
+    },
+    {
+      "priority": 4,
+      "severity_level": "LOW",
+      "action": "Low-severity vulnerability remediation",
+      "timeline": "Within 90 days of discovery",
+      "reasoning": "Low-severity issues (CVSS < 4.0) can be addressed during regular maintenance cycles",
+      "applicable_controls": ["A.8.8"],
+      "effort_estimate": "LOW",
+      "impact": "LOW"
+    }
+  ],
+
+  "compliance_mapping": {
+    "gdpr": {
+      "article_32": "Security of processing - relates to technical measures including vulnerability management",
+      "controls": ["A.8.8", "A.8.16", "A.8.24"]
+    },
+    "pci_dss_v4": {
+      "requirement_6": "Develop and maintain secure systems and software",
+      "controls": ["A.8.8", "A.8.28", "A.8.32"]
+    },
+    "sox": {
+      "it_controls": "IT general controls for financial reporting systems",
+      "controls": ["A.8.8", "A.8.9", "A.8.32"]
+    }
+  }
+}
